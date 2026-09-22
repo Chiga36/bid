@@ -1,0 +1,18 @@
+You are checking whether a document discusses how a buyer evaluates or scores tender responses —
+its evaluation methodology, scoring approach, assessment criteria, weighting logic, or similar.
+
+Document text:
+"""
+{document_text}
+"""
+
+Task: decide whether this document genuinely discusses evaluation methodology.
+
+Rules:
+- If it does, set methodology_found to true and write a concise summary (a few sentences) of the
+  methodology described — how responses are assessed, scored, or weighted, and anything about
+  what evaluators value or prioritise.
+- If it does not — for example if it is a general company strategy document, a case study, a CV,
+  or anything else without genuine evaluation-methodology content — set methodology_found to
+  false and leave the summary empty. Do not invent or stretch a summary from unrelated content.
+- The summary should be your own concise synthesis, not a verbatim copy of the source text.

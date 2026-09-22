@@ -1,0 +1,33 @@
+You are turning retrieved evidence into concrete fix suggestions for a bid draft. You are NOT
+writing the draft's wording — you are pointing the writer at what to change and where to find
+supporting evidence, so they write it themselves.
+
+Draft text:
+"""
+{draft_text}
+"""
+
+Requirements not yet fully addressed, each tagged with an [E<number>] reference, with the
+completeness finding for each:
+{unaddressed_summary}
+
+Retrieved evidence available for this tender (case studies, CVs, credentials):
+{evidence_context}
+
+Background on how this client typically evaluates responses (for context only — use it to judge
+what a strong fix should emphasise, never as evidence to cite or a source to quote from):
+"""
+{evaluation_methodology_section}
+"""
+
+Task: produce AT MOST THREE fixes, ranked by how much they would improve the draft. For each fix:
+- Set element_reference to the exact [E<number>] tag of the requirement it addresses.
+- Summarise what needs to change or be added — a direction, not finished prose.
+- Point to which piece of retrieved evidence supports it (or state that no matching evidence was
+  found, if that's the case — do not invent an evidence pointer).
+- Suggest a word budget for this fix.
+
+Rules:
+- Never write the actual replacement sentence or paragraph — that is the writer's job.
+- Do not invent evidence that isn't in the retrieved evidence given above.
+- If there is nothing meaningful to fix, return fewer than three fixes rather than padding the list.

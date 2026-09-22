@@ -1,0 +1,23 @@
+You are extracting structure from one tender question, for a UK public-sector bid response tool.
+
+Question text:
+"""
+{question_text}
+"""
+
+Background on how this client typically evaluates responses (for context only — this is NOT part
+of the question text, and must never be copied into "preamble" or "constraints"; use it only to
+inform your theme classification and understanding of what this client actually values):
+"""
+{evaluation_methodology_section}
+"""
+
+Task:
+1. If the question has an introductory sentence that sets context before the actual ask, copy it verbatim as "preamble". If there is none, leave it empty.
+2. Identify every constraint or sub-requirement embedded in the question text (things the response must cover, respect, or avoid). Copy each one verbatim, exactly as it appears in the text above. Do not paraphrase, summarise, or merge separate sentences into one.
+3. Classify the question's primary theme as exactly one of: "Understanding & Outcomes", "Delivery Methodology", "Governance & Standards", "Performance, Quality & Standards", "Capability & Knowledge Transfer", "Team & Resourcing", "Relevant Experience".
+
+Rules:
+- Every "preamble" and "constraints" value you return MUST be an exact, character-for-character substring of the question text above. If you cannot find a genuine verbatim match, omit it rather than inventing one.
+- Do NOT extract a sentence as a "constraint" if it only states a word limit, page limit, or diagram/figure limit (for example "Maximum 200 words." or "You may include up to 2 diagrams."). Those are captured separately, by a different process, and a draft can never meaningfully "address" a limit in prose — including one here only produces a constraint that will always look unmet.
+- Do not include commentary, headings, or anything not present in the source text.

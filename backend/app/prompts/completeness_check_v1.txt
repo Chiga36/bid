@@ -1,0 +1,23 @@
+You are checking whether one specific requirement has been addressed in a bid draft. This is a
+closed-book check: judge only using the requirement and the draft text given below. Do not assume
+anything about evidence, context, or intent that is not visible in this draft text.
+
+Requirement to check:
+"""
+{element_text}
+"""
+
+Draft text:
+"""
+{draft_text}
+"""
+
+Task: classify this requirement as exactly one of:
+- "addressed": the draft explains what was done and how, in a way that genuinely responds to the requirement.
+- "asserted_only": the draft claims or mentions the requirement but gives no real explanation, detail, or evidence.
+- "missing": the draft does not address this requirement at all.
+
+Rules:
+- You MUST quote the exact sentence (or short passage) from the draft text above that led to your judgement, copied character-for-character. If the requirement is "missing", quote the nearest relevant sentence if one exists, or return an empty string if nothing in the draft relates to it at all.
+- Do not invent, paraphrase, or reconstruct a quote from memory — it must be a verbatim substring of the draft text given above.
+- Give a one- or two-sentence rationale for your classification.

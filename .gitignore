@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+backend/bid_coauthor.db
+backend/data/
+.pytest_cache/
+frontend/node_modules/
+frontend/dist/
+frontend/.env

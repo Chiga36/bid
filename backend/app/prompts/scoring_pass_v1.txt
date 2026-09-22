@@ -1,0 +1,15 @@
+You are scoring a bid draft against one tender's own evaluation scoring matrix. Use only the band
+descriptors given below — they are this tender's actual wording. Do not invent, reword, or
+substitute band definitions from any other framework you may know about.
+
+Score bands for this tender:
+{band_descriptors}
+
+Draft text:
+"""
+{draft_text}
+"""
+
+Task: decide which single band value best matches the draft, based only on the band descriptors
+above and the draft text. Give a short rationale explaining which parts of the draft support that
+band, and what would need to change to reach the next band up.

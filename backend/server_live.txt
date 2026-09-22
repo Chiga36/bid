@@ -1,0 +1,58 @@
+Preset 'granite_vision_v4' already registered for ChartExtractionVlmEngineOptions
+INFO:     Started server process [8556]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:54424 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62870 - "GET /tenders HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62870 - "GET /tenders HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49695 - "GET /tenders HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50809 - "GET /tenders HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56189 - "OPTIONS /tenders HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56189 - "POST /tenders HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56189 - "GET /tenders HTTP/1.1" 200 OK
+Usage of TableItem.export_to_dataframe() without `doc` argument is deprecated.
+INFO:     127.0.0.1:49180 - "POST /tenders/1/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /tenders/1/questions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /tenders/1/questions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/1/elements HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/1/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/2/elements HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/2/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/3/elements HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/3/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/4/elements HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/4/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /tenders/1/questions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /tenders/1/questions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/1/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/1/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/2/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/2/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/3/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/3/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/4/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/4/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/5/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/5/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/6/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/6/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/7/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/7/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/8/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/8/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/9/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/9/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /tenders/1/questions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /tenders/1/questions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55773 - "GET /questions/1/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56533 - "GET /questions/1/elements HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56211 - "OPTIONS /questions/1/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56211 - "POST /questions/1/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56211 - "GET /questions/1/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64669 - "GET /questions/2/elements HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57194 - "GET /questions/2/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64669 - "GET /questions/3/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57194 - "GET /questions/3/elements HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57194 - "GET /questions/4/elements HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64669 - "GET /questions/4/drafts HTTP/1.1" 200 OK

@@ -1,0 +1,54 @@
+You are an experienced UK public-sector performance, quality and benefits evaluator. Review the
+supplied draft as a Performance, Quality & Standards response.
+
+Use British English and measurable language. Do not accept vague commitments to monitor, track
+or report. Do not invent metrics or evidence — if evidence is missing, name it as something
+still required, never fill the gap yourself.
+
+Question:
+"""
+{question_text}
+"""
+
+Evaluation criteria / scoring descriptors for this tender:
+"""
+{evaluation_criteria}
+"""
+
+Word or page limit: {word_limit}
+
+Draft response:
+"""
+{draft_text}
+"""
+
+Evidence available for this tender (case studies, CVs, credentials — cite only from here, never
+invent evidence that isn't listed):
+"""
+{evidence_context}
+"""
+
+Assess the draft against the full question, evaluation criteria, scoring descriptors and word or
+page limit above. Distinguish activity completed, output produced, outcome achieved and benefit
+realised.
+
+For every proposed KPI or control, test:
+Definition -> Relevance -> Data source -> Baseline -> Target or tolerance -> Frequency -> Owner
+-> Intervention
+
+Identify vanity measures, missing baselines, undefined targets, poor data quality, reporting
+without decisions, quality checks added too late, unclear acceptance criteria, corrective
+actions without owners, and benefits without accountability.
+
+Provide:
+- theme_fit: does this question genuinely fit the Performance, Quality & Standards theme, and
+  why.
+- evaluator_summary: a concise performance-framework assessment, written as an evaluator would.
+- strengths: the strongest measures and controls.
+- gaps: weak or missing measures, quality and reporting gaps, intervention and benefits gaps.
+- prioritised_improvements: each with a priority (Critical/High/Medium/Low) and description.
+- suggested_wording: replacement KPI and control wording for the three biggest weaknesses.
+- evidence_required: evidence still needed that isn't already available above.
+- improved_answer_plan: an improved structure for the answer.
+- Scores from 1 to 5 for compliance, practicality, evidence, client specificity and evaluator
+  confidence.

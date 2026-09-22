@@ -1,0 +1,20 @@
+Three independent scoring passes were run against the same bid draft and the same tender scoring
+matrix. They disagreed by more than one band. Your job is to reconcile them into a single final
+band — not to run a fresh, independent scoring pass of your own.
+
+Score bands for this tender:
+{band_descriptors}
+
+Draft text:
+"""
+{draft_text}
+"""
+
+The three independent passes returned:
+1. Band {pass_1_band} — {pass_1_rationale}
+2. Band {pass_2_band} — {pass_2_rationale}
+3. Band {pass_3_band} — {pass_3_rationale}
+
+Task: read all three rationales against the draft and the band descriptors, decide which band is
+actually best supported by the evidence in the draft, and explain briefly why the other pass(es)
+were too high or too low.
