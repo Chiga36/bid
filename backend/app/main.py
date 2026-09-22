@@ -30,7 +30,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # matches the reference UI's dev server
+    # Any localhost/127.0.0.1 port, not a hardcoded 5173 — Vite auto-increments to 5174, 5175...
+    # whenever something else already holds the default port, and a hardcoded allow_origins list
+    # makes every request fail with a hard 400 the moment that happens, not just a warning.
+    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1):\d+$",
     allow_methods=["*"],
     allow_headers=["*"],
 )
