@@ -137,19 +137,23 @@ def _find_weight_in_tables(question_title: str, tables: List[RawTable]) -> Optio
 
 
 def extract_prose_elements(
-    question_text: str, evaluation_methodology_context: str = ""
+    question_text: str,
+    evaluation_methodology_context: str = "",
+    tender_instructions_context: str = "",
 ) -> List[ElementCandidate]:
     """LLM call, constrained to verbatim extraction. Every span the model returns is checked
     against `question_text` with a plain substring test — the model cannot get a fabricated
-    span past this function. `evaluation_methodology_context` (if any) is background only, used
-    for theme classification — the prompt explicitly forbids copying from it into preamble or
-    constraints, which stay verbatim-from-the-question-only regardless."""
+    span past this function. `evaluation_methodology_context` and `tender_instructions_context`
+    (if any) are background only, used to inform theme classification and understanding of what
+    this question is really asking — the prompt explicitly forbids copying from either into
+    preamble or constraints, which stay verbatim-from-the-question-only regardless."""
     result: DecompositionExtraction = llm_client.call_structured(
         agent=AGENT_NAME,
         prompt_file="decomposition_extract_v1.txt",
         variables={
             "question_text": question_text,
-            "evaluation_methodology_section": _format_methodology_section(evaluation_methodology_context),
+            "evaluation_methodology_section": _format_background_section(evaluation_methodology_context),
+            "tender_instructions_section": _format_background_section(tender_instructions_context),
         },
         response_model=DecompositionExtraction,
     )
@@ -190,10 +194,8 @@ def extract_prose_elements(
     return candidates
 
 
-def _format_methodology_section(evaluation_methodology_context: str) -> str:
-    if not evaluation_methodology_context:
-        return "(none available)"
-    return evaluation_methodology_context
+def _format_background_section(context: str) -> str:
+    return context if context else "(none available)"
 
 
 def run_decomposition(
@@ -201,11 +203,14 @@ def run_decomposition(
     question_text: str,
     tables: List[RawTable],
     evaluation_methodology_context: str = "",
+    tender_instructions_context: str = "",
 ) -> List[ElementCandidate]:
     """Orchestrates both extraction layers. Callers (the router) are responsible for persisting
     the returned candidates to `elements` with locked=0 — decomposition never locks its own
     output. `evaluation_methodology_context` comes from app/agents/methodology.py's
-    format_methodology_context(), fetched by the router — this function stays DB-free."""
+    format_methodology_context(); `tender_instructions_context` comes from a
+    query_tender_requirements() retrieval scoped to this question — both fetched by the router,
+    this function stays DB-free."""
     candidates = extract_limits_and_weights(question_title, question_text, tables)
-    candidates.extend(extract_prose_elements(question_text, evaluation_methodology_context))
+    candidates.extend(extract_prose_elements(question_text, evaluation_methodology_context, tender_instructions_context))
     return candidates

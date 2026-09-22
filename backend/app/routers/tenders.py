@@ -13,10 +13,15 @@ from fastapi import APIRouter, HTTPException, UploadFile
 from app.agents.ingestion import extract_questions
 from app.config import settings
 from app.db import db_session
-from app.document_extraction import read_document
+from app.document_extraction import exclude_sheets, read_document
 from app.models import QuestionOut, ScoringBandIn, TenderCreate, TenderOut
 
 router = APIRouter(tags=["tenders"])
+
+# The "Questionnaire" upload category is the Award Questionnaire only — the Selection
+# Questionnaire sheet is dropped before the Ingestion agent ever sees it, so it cannot end up
+# extracting questions from it (it never sees that text at all).
+_EXCLUDED_SHEET_PATTERNS = ["selection questionnaire"]
 
 
 @router.post("/tenders", response_model=TenderOut)
@@ -101,7 +106,8 @@ async def upload_document(tender_id: int, file: UploadFile):
     dest_path.write_bytes(contents)
 
     parsed = read_document(dest_path)
-    candidates = extract_questions(parsed.full_text)
+    document_text = exclude_sheets(parsed.full_text, _EXCLUDED_SHEET_PATTERNS)
+    candidates = extract_questions(document_text)
 
     created: List[dict] = []
     with db_session() as conn:

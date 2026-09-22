@@ -16,6 +16,8 @@ def check_completeness(draft_id: int):
         if draft is None:
             raise HTTPException(status_code=404, detail="Draft not found")
 
+        question = conn.execute("SELECT tender_id FROM questions WHERE id = ?", (draft["question_id"],)).fetchone()
+
         placeholders = ",".join("?" for _ in COMPLETENESS_ELEMENT_KINDS)
         locked_elements = conn.execute(
             f"SELECT id, value_text FROM elements WHERE question_id = ? AND locked = 1 AND kind IN ({placeholders})",
@@ -28,7 +30,7 @@ def check_completeness(draft_id: int):
             )
 
     elements = [{"id": r["id"], "value_text": r["value_text"]} for r in locked_elements]
-    results = run_completeness(draft["content_text"], elements)
+    results = run_completeness(draft["content_text"], elements, question["tender_id"])
 
     with db_session() as conn:
         for r in results:

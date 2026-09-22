@@ -10,6 +10,7 @@ from fastapi import APIRouter, Form, HTTPException, UploadFile
 
 from app import vector_store
 from app.agents.methodology import extract_methodology
+from app.agents.tender_requirements import extract_requirements
 from app.config import settings
 from app.db import db_session
 from app.document_extraction import read_document
@@ -48,6 +49,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
             )
 
     methodology_extracted = False
+    requirements_extracted = 0
     if category == _METHODOLOGY_CATEGORY:
         # Best-effort: a failure here (including missing Azure credentials) must never break
         # evidence upload, which otherwise works with no Azure configuration at all since
@@ -64,12 +66,30 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
         except Exception:
             pass
 
+        try:
+            requirements = extract_requirements(parsed.full_text)
+            if requirements:
+                with db_session() as conn:
+                    for req in requirements:
+                        conn.execute(
+                            "INSERT INTO tender_requirements (tender_id, source_document, category, requirement_text, strength) "
+                            "VALUES (?, ?, ?, ?, ?)",
+                            (tender_id, file.filename, req.category, req.requirement_text, req.strength),
+                        )
+                req_chunk_ids = [f"tr-{uuid.uuid4().hex}" for _ in requirements]
+                req_chunk_texts = [req.requirement_text for req in requirements]
+                vector_store.add_tender_requirements(tender_id, req_chunk_ids, req_chunk_texts, source_document=file.filename)
+                requirements_extracted = len(requirements)
+        except Exception:
+            pass
+
     return {
         "tender_id": tender_id,
         "source_document": file.filename,
         "category": category,
         "chunks_ingested": len(chunk_texts),
         "methodology_extracted": methodology_extracted,
+        "requirements_extracted": requirements_extracted,
     }
 
 

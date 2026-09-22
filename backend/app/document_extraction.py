@@ -12,6 +12,7 @@ content — that's a visible symptom (an empty or near-empty RawDocument), not a
 answer. Reading one properly would need either OCR or a vision-capable model call, neither of
 which this module does.
 """
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
@@ -106,3 +107,28 @@ def read_document(path) -> RawDocument:
     if reader is None:
         raise ValueError(f"Unsupported file type '{suffix}'. Supported: {', '.join(sorted(_READERS))}.")
     return reader(path)
+
+
+_SHEET_MARKER_PATTERN = re.compile(r"^## Sheet: (.+)$", re.MULTILINE)
+
+
+def exclude_sheets(full_text: str, name_patterns: List[str]) -> str:
+    """Drops any '## Sheet: <title>' block (as written by _read_xlsx above) whose title matches
+    one of `name_patterns` (case-insensitive substring match) — e.g. excluding a "Selection
+    Questionnaire" sheet before question extraction ever sees it, so the LLM can't extract from
+    content it was never shown. A no-op on text with no sheet markers at all, i.e. anything that
+    didn't come from an .xlsx — this only ever applies to xlsx's own sheet structure."""
+    matches = list(_SHEET_MARKER_PATTERN.finditer(full_text))
+    if not matches:
+        return full_text
+
+    lowered_patterns = [p.lower() for p in name_patterns]
+    kept_blocks: List[str] = []
+    for i, match in enumerate(matches):
+        title = match.group(1).strip()
+        start = match.start()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(full_text)
+        if any(pattern in title.lower() for pattern in lowered_patterns):
+            continue
+        kept_blocks.append(full_text[start:end].strip())
+    return "\n\n".join(kept_blocks)

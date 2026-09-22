@@ -5,6 +5,7 @@ from typing import List
 
 from fastapi import APIRouter, HTTPException
 
+from app import vector_store
 from app.agents.decomposition import run_decomposition
 from app.agents.methodology import format_methodology_context
 from app.db import db_session
@@ -48,9 +49,24 @@ def decompose_question(question_id: int):
         if question is None:
             raise HTTPException(status_code=404, detail="Question not found")
 
+    tender_id = question["tender_id"]
+    with db_session() as conn:
+        has_requirements = conn.execute(
+            "SELECT 1 FROM tender_requirements WHERE tender_id = ? LIMIT 1", (tender_id,)
+        ).fetchone()
+    if has_requirements is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Upload the competition tender instructions document under Strategy and Context first.",
+        )
+
     tables = _tables_for_question(question)
-    methodology_context = _methodology_context_for_tender(question["tender_id"])
-    candidates = run_decomposition(question["title"], question["question_text"], tables, methodology_context)
+    methodology_context = _methodology_context_for_tender(tender_id)
+    tender_instructions_chunks = vector_store.query_tender_requirements(tender_id, question["question_text"])
+    tender_instructions_context = "\n\n".join(tender_instructions_chunks)
+    candidates = run_decomposition(
+        question["title"], question["question_text"], tables, methodology_context, tender_instructions_context
+    )
 
     created: List[dict] = []
     with db_session() as conn:

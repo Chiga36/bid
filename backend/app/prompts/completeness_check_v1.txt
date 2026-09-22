@@ -12,6 +12,14 @@ Draft text:
 {draft_text}
 """
 
+Background: related requirements from the competition tender instructions document (for context
+only — never something to check for its own sake, and never a substitute for the specific
+requirement above; use it only to understand what "addressed" should really mean here, e.g. a
+detail the tender instructions imply is expected even if the requirement text itself is terse):
+"""
+{tender_instructions_section}
+"""
+
 Task: classify this requirement as exactly one of:
 - "addressed": the draft explains what was done and how, in a way that genuinely responds to the requirement.
 - "asserted_only": the draft claims or mentions the requirement but gives no real explanation, detail, or evidence.

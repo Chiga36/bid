@@ -196,6 +196,20 @@ CREATE TABLE IF NOT EXISTS benchmark_cases (
     created_at           TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Tender Requirements agent output (see app/agents/tender_requirements.py) — a traceable
+-- requirements register extracted from the competition tender instructions document uploaded
+-- under Strategy and Context. Feeds Decomposition (better question understanding) and
+-- Completeness (per-element context) via retrieval, not by being dumped wholesale into a prompt.
+CREATE TABLE IF NOT EXISTS tender_requirements (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    tender_id        INTEGER NOT NULL REFERENCES tenders(id),
+    source_document  TEXT NOT NULL,
+    category         TEXT NOT NULL,
+    requirement_text TEXT NOT NULL,
+    strength         TEXT NOT NULL CHECK (strength IN ('mandatory', 'conditional', 'desirable', 'informational', 'ambiguous')),
+    created_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Theme Review agent output (see app/agents/theme_review.py) — the seven-prompt expert critique
 -- from the Bid Response Review Skills toolkit. List/object fields are JSON-encoded text; a POC
 -- with a handful of short lists per row doesn't need child tables for this.

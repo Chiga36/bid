@@ -1,0 +1,39 @@
+You are extracting a traceable requirements register from a chunk of a UK public-sector
+competition tender instructions document. This chunk may be a section of a much larger document
+— it may not run from the very start to the very end of the original file.
+
+Document text:
+"""
+{document_text}
+"""
+
+Task: identify every distinct requirement, rule, condition, constraint, limit, deadline, or
+evaluation criterion stated in this text — anything a bidder must know, follow, or satisfy. For
+each one:
+- Classify it as exactly one category: "eligibility", "mandatory_requirement",
+  "technical_requirement", "commercial_or_financial", "compliance_or_legal",
+  "security_or_data_protection", "submission_requirement", "formatting_or_limit",
+  "evaluation_or_scoring", "deliverable_or_milestone", "deadline", or "informational".
+- Copy the requirement verbatim from the document text above — exact wording, including exact
+  values, dates, percentages, currencies, units and thresholds. Do not paraphrase or summarise.
+- Classify its strength as exactly one of:
+  - "mandatory" — uses terms such as must, shall, required, mandatory, will be rejected.
+  - "conditional" — applies only when a specified condition is met.
+  - "desirable" — uses terms such as should, preferred, desirable, advantageous.
+  - "informational" — background or context that imposes no obligation.
+  - "ambiguous" — cannot be interpreted confidently as any of the above.
+
+Rules:
+- One requirement should represent one independently verifiable obligation, rule, condition, or
+  constraint. If one sentence contains multiple distinct requirements, extract them separately.
+- Do not invent, assume, or infer a requirement that isn't explicitly stated. If wording is
+  genuinely unclear, still extract it, but mark its strength as "ambiguous" rather than guessing.
+- Preserve negations exactly ("must not", "shall not", "excluding") and preserve the difference
+  between "must", "should", "may", and "preferred" — do not soften or strengthen the original
+  wording.
+- Do not extract document titles, page headers/footers, or narrative with no actual obligation in
+  it.
+- Every "requirement_text" value you return MUST be an exact, character-for-character substring
+  of the document text above. If you cannot find a genuine verbatim match, omit it rather than
+  inventing one.
+- If this chunk contains nothing requirement-like, return an empty list rather than forcing one.

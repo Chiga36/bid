@@ -13,6 +13,7 @@ from typing import List
 
 from app import llm_client
 from app.models import QuestionExtractionResult
+from app.text_chunking import split_into_chunks
 
 AGENT_NAME = "ingestion"
 
@@ -26,29 +27,6 @@ class CandidateQuestion:
     title: str
     question_text: str
     category: str  # "sq" | "pass_fail" | "scored"
-
-
-def _split_into_chunks(text: str, limit: int) -> List[str]:
-    """Splits on paragraph boundaries (blank lines) so a question's text is never cut mid-sentence
-    unless a single paragraph alone exceeds the limit — greedily packs paragraphs into chunks."""
-    paragraphs = [p for p in text.split("\n\n") if p]
-    if not paragraphs:
-        return []
-
-    chunks: List[str] = []
-    current: List[str] = []
-    current_len = 0
-    for para in paragraphs:
-        para_len = len(para) + 2
-        if current and current_len + para_len > limit:
-            chunks.append("\n\n".join(current))
-            current = []
-            current_len = 0
-        current.append(para)
-        current_len += para_len
-    if current:
-        chunks.append("\n\n".join(current))
-    return chunks
 
 
 def _extract_from_chunk(chunk_text: str) -> List[CandidateQuestion]:
@@ -67,7 +45,7 @@ def _extract_from_chunk(chunk_text: str) -> List[CandidateQuestion]:
 
 
 def extract_questions(document_text: str) -> List[CandidateQuestion]:
-    chunks = _split_into_chunks(document_text, _CHUNK_CHAR_LIMIT)
+    chunks = split_into_chunks(document_text, _CHUNK_CHAR_LIMIT)
     candidates: List[CandidateQuestion] = []
     for chunk in chunks:
         candidates.extend(_extract_from_chunk(chunk))

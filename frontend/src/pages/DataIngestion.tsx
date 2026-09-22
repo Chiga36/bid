@@ -4,20 +4,22 @@ import { uploadEvidence, uploadTenderDocument } from "../api/tenders";
 import FileDropzone from "../components/FileDropzone";
 import { useTender } from "../context/TenderContext";
 
-// Only "Competition Info" drives question extraction (POST /tenders/{id}/documents); the other
+// Only "Questionnaire" drives question extraction (POST /tenders/{id}/documents); the other
 // five all feed the tender-scoped evidence library (POST /tenders/{id}/evidence), tagged with
 // their own category — see the plan's "Frontend category -> backend mapping" section for why.
+// "Questionnaire" (key unchanged: competition_info) and "Strategy and Context" are the two
+// mandatory categories — see MANDATORY_CATEGORY_KEYS below.
 const CATEGORIES: { key: string; title: string; description: string; target: "document" | "evidence" }[] = [
   {
     key: "strategy_and_context",
     title: "Strategy and Context",
-    description: "Corporate strategy, market context, and overarching goals.",
+    description: "The competition tender instructions document — evaluation methodology and the full requirements register are extracted from this.",
     target: "evidence",
   },
   {
     key: "competition_info",
-    title: "Competition Info",
-    description: "Tender documents, ITT, RFP, and evaluation guidance for requirement extraction.",
+    title: "Questionnaire",
+    description: "The Award Questionnaire spreadsheet (xlsx). Selection Questionnaire sheets are excluded automatically — only Award Questionnaire questions are extracted, verbatim.",
     target: "document",
   },
   {
@@ -48,6 +50,8 @@ const CATEGORIES: { key: string; title: string; description: string; target: "do
 
 type FilesByCategory = Record<string, File[]>;
 
+const MANDATORY_CATEGORY_KEYS = ["competition_info", "strategy_and_context"] as const;
+
 export default function DataIngestion() {
   const { selectedTenderId } = useTender();
   const [filesByCategory, setFilesByCategory] = useState<FilesByCategory>({});
@@ -55,6 +59,10 @@ export default function DataIngestion() {
   const [resultLog, setResultLog] = useState<string[]>([]);
 
   const totalFiles = Object.values(filesByCategory).reduce((sum, files) => sum + files.length, 0);
+  const missingMandatory = MANDATORY_CATEGORY_KEYS.filter((key) => (filesByCategory[key] ?? []).length === 0);
+  const missingMandatoryTitles = missingMandatory.map(
+    (key) => CATEGORIES.find((c) => c.key === key)?.title ?? key
+  );
 
   async function handleExecute() {
     if (!selectedTenderId) return;
@@ -89,14 +97,24 @@ export default function DataIngestion() {
     return <p className="text-sm text-slate-500">Create or select a tender first (top right).</p>;
   }
 
+  let executeHint: string;
+  if (missingMandatory.length > 0) {
+    executeHint = `Add a file to ${missingMandatoryTitles.join(" and ")} to enable this — both are required.`;
+  } else if (totalFiles === 0) {
+    executeHint = "Add files above to enable this.";
+  } else {
+    executeHint = `${totalFiles} file(s) ready`;
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-lg font-semibold text-slate-900">Knowledge Base Ingestion</h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-500">
-          Upload tender and supporting documents to the Bid Co-author agent. Every category here is
-          optional — upload as few or as many files as you have. More files generally means more
-          context for the agents to work with, but nothing here is required to proceed.
+          Upload tender and supporting documents to the Bid Co-author agent. Questionnaire and
+          Strategy and Context are required before you can run the Ingestion agent. The other four
+          categories are optional — upload as few or as many files as you have. More files
+          generally means more context for the agents to work with.
         </p>
       </div>
 
@@ -114,15 +132,13 @@ export default function DataIngestion() {
 
       <div className="flex items-center gap-3">
         <button
-          disabled={running || totalFiles === 0}
+          disabled={running || totalFiles === 0 || missingMandatory.length > 0}
           onClick={handleExecute}
           className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
           {running ? "Running..." : "Execute Ingestion Agent"}
         </button>
-        <span className="text-xs text-slate-400">
-          {totalFiles === 0 ? "Add files above to enable this, or skip ingestion entirely." : `${totalFiles} file(s) ready`}
-        </span>
+        <span className="text-xs text-slate-400">{executeHint}</span>
       </div>
 
       {resultLog.length > 0 && (

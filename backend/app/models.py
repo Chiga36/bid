@@ -10,6 +10,21 @@ QuestionCategory = Literal["sq", "pass_fail", "scored"]
 ElementKind = Literal["preamble", "constraint", "word_limit", "diagram_limit", "weight", "theme"]
 CompletenessStatus = Literal["addressed", "asserted_only", "missing", "unverified"]
 Confidence = Literal["high", "low"]
+TenderRequirementCategory = Literal[
+    "eligibility",
+    "mandatory_requirement",
+    "technical_requirement",
+    "commercial_or_financial",
+    "compliance_or_legal",
+    "security_or_data_protection",
+    "submission_requirement",
+    "formatting_or_limit",
+    "evaluation_or_scoring",
+    "deliverable_or_milestone",
+    "deadline",
+    "informational",
+]
+TenderRequirementStrength = Literal["mandatory", "conditional", "desirable", "informational", "ambiguous"]
 
 
 class Theme(str, Enum):
@@ -238,6 +253,20 @@ class QuestionExtractionResult(BaseModel):
     questions, not a forced one."""
 
     questions: List[ExtractedQuestion]
+
+
+class TenderRequirement(BaseModel):
+    category: TenderRequirementCategory
+    requirement_text: str = Field(description="Verbatim excerpt from the source text stating this requirement")
+    strength: TenderRequirementStrength
+
+
+class TenderRequirementExtractionResult(BaseModel):
+    """Output of the Tender Requirements agent's per-chunk LLM call. May legitimately be empty —
+    a chunk with nothing requirement-like in it (e.g. a cover page) should return no requirements,
+    not a forced one."""
+
+    requirements: List[TenderRequirement]
 
 
 class PrioritisedImprovement(BaseModel):

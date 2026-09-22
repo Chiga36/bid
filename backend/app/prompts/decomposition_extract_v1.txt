@@ -12,6 +12,14 @@ inform your theme classification and understanding of what this client actually 
 {evaluation_methodology_section}
 """
 
+Background: requirements from the competition tender instructions document that are relevant to
+this question (for context only — this is NOT part of the question text, and must never be copied
+into "preamble" or "constraints"; use it only to understand what this question is really asking
+and to classify its theme more accurately):
+"""
+{tender_instructions_section}
+"""
+
 Task:
 1. If the question has an introductory sentence that sets context before the actual ask, copy it verbatim as "preamble". If there is none, leave it empty.
 2. Identify every constraint or sub-requirement embedded in the question text (things the response must cover, respect, or avoid). Copy each one verbatim, exactly as it appears in the text above. Do not paraphrase, summarise, or merge separate sentences into one.
