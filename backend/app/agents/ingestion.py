@@ -5,7 +5,7 @@ not by pairing headings with the paragraph underneath them. Long documents are c
 paragraph boundaries first, so no single call is ever handed an unbounded amount of text — each
 chunk is extracted independently and the results are concatenated. Every extracted question_text
 is verified as a genuine verbatim substring of its source chunk before being accepted, the same
-discipline app/agents/decomposition.py already applies to constraints — a fabricated question
+discipline app/agents/decomposition.py already applies to sub-questions — a fabricated question
 cannot reach the database.
 """
 from dataclasses import dataclass

@@ -26,7 +26,7 @@ def check_completeness(draft_id: int):
         if not locked_elements:
             raise HTTPException(
                 status_code=400,
-                detail="No locked preamble/constraint elements for this question. Run /decompose then /lock first.",
+                detail="No locked preamble/sub-question elements for this question. Run /decompose then /lock first.",
             )
 
     elements = [{"id": r["id"], "value_text": r["value_text"]} for r in locked_elements]

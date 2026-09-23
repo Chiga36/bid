@@ -10,6 +10,13 @@ Question:
 {question_text}
 """
 
+This question's sub-questions (numbered, verbatim from Decomposition — use these to structure
+your gap analysis below; if this says "none available", treat the whole question above as a
+single sub-question):
+"""
+{sub_questions_block}
+"""
+
 Evaluation criteria / scoring descriptors for this tender:
 """
 {evaluation_criteria}
@@ -40,8 +47,15 @@ Provide:
 - theme_fit: does this question genuinely fit the Relevant Experience theme, and why.
 - evaluator_summary: a concise credential-relevance assessment, written as an evaluator would.
 - strengths: the strongest evidence presented.
-- gaps: weak or unsupported claims, missing quantified outcomes, attribution gaps,
-  transferability gaps.
+- gaps: for EACH sub-question listed above that has a genuine gap — weak/unsupported claims,
+  missing quantified outcomes, attribution gaps, or transferability gaps — return one entry with:
+  sub_question (copied exactly from the numbered list above), answer_excerpt (a verbatim quote
+  from the draft response above that addresses, or attempts to address, that sub-question — copy
+  it character-for-character; use an empty string if the draft does not address that sub-question
+  at all), and gap (what's missing or weak, in evaluator voice, and why it matters). Only include
+  a sub-question if there is a genuine gap — do not manufacture one for every sub-question. If no
+  sub-questions were provided above, return at most one entry using the full question as
+  sub_question.
 - prioritised_improvements: each with a priority (Critical/High/Medium/Low) and description.
 - suggested_wording: suggested credential wording for the three biggest weaknesses.
 - evidence_required: evidence still needed that isn't already available above.

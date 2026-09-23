@@ -37,10 +37,14 @@ CREATE TABLE IF NOT EXISTS elements (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     question_id       INTEGER NOT NULL REFERENCES questions(id),
     kind              TEXT NOT NULL CHECK (
-                          kind IN ('preamble', 'constraint', 'word_limit', 'diagram_limit', 'weight', 'theme')
+                          kind IN ('preamble', 'sub_question', 'word_limit', 'diagram_limit', 'weight', 'theme')
                       ),
     value_text        TEXT NOT NULL,
     source_quote      TEXT,
+    -- Populated only for kind='sub_question'. Genuine synthesis (not verbatim extraction), same
+    -- treatment as Theme Review's prose fields — never substring-verified against the source.
+    elaboration       TEXT,
+    answer_guidance   TEXT,
     extraction_method TEXT NOT NULL CHECK (extraction_method IN ('rule', 'llm')),
     locked            INTEGER NOT NULL DEFAULT 0,
     created_at        TEXT NOT NULL DEFAULT (datetime('now'))
@@ -220,7 +224,7 @@ CREATE TABLE IF NOT EXISTS theme_reviews (
     theme_fit                TEXT NOT NULL,
     evaluator_summary        TEXT NOT NULL,
     strengths                TEXT NOT NULL,  -- JSON array of strings
-    gaps                     TEXT NOT NULL,  -- JSON array of strings
+    gaps                     TEXT NOT NULL,  -- JSON array of {sub_question, answer_excerpt, gap}
     prioritised_improvements TEXT NOT NULL,  -- JSON array of {priority, description}
     suggested_wording        TEXT NOT NULL,  -- JSON array of strings
     evidence_required        TEXT NOT NULL,  -- JSON array of strings

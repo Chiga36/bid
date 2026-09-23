@@ -2,9 +2,11 @@
 
 Word/diagram limits and weightings are extracted with plain code (regex over parsed text,
 column-mapping over parsed tables) — never the model — because these exact numbers are trusted
-as ground truth by everything downstream. Preamble/constraints/theme genuinely need the model to
-read the question, but every span it returns is verified as a real substring of the source text
-before it is written to the database; anything that fails is dropped, not guessed at.
+as ground truth by everything downstream. Preamble/sub-questions/theme genuinely need the model
+to read the question, but every span it returns is verified as a real substring of the source
+text before it is written to the database; anything that fails is dropped, not guessed at. Each
+sub-question also carries two synthesis fields (elaboration, answer_guidance) that are never
+substring-checked — they're the model's own explanatory commentary, not extraction.
 """
 import re
 from dataclasses import dataclass
@@ -53,6 +55,8 @@ class ElementCandidate:
     value_text: str
     source_quote: Optional[str]
     extraction_method: str  # "rule" | "llm"
+    elaboration: Optional[str] = None
+    answer_guidance: Optional[str] = None
 
 
 def extract_limits_and_weights(
@@ -141,12 +145,14 @@ def extract_prose_elements(
     evaluation_methodology_context: str = "",
     tender_instructions_context: str = "",
 ) -> List[ElementCandidate]:
-    """LLM call, constrained to verbatim extraction. Every span the model returns is checked
-    against `question_text` with a plain substring test — the model cannot get a fabricated
-    span past this function. `evaluation_methodology_context` and `tender_instructions_context`
-    (if any) are background only, used to inform theme classification and understanding of what
-    this question is really asking — the prompt explicitly forbids copying from either into
-    preamble or constraints, which stay verbatim-from-the-question-only regardless."""
+    """LLM call, constrained to verbatim extraction. Every sub-question's `text` (and the
+    preamble) is checked against `question_text` with a plain substring test — the model cannot
+    get a fabricated span past this function. Each sub-question's `elaboration`/`answer_guidance`
+    are synthesis and pass through unchecked, same treatment as Theme Review's prose fields.
+    `evaluation_methodology_context` and `tender_instructions_context` (if any) are background
+    only, used to inform theme classification, elaboration and answer guidance — the prompt
+    explicitly forbids copying from either into preamble or sub-question text, which stay
+    verbatim-from-the-question-only regardless."""
     result: DecompositionExtraction = llm_client.call_structured(
         agent=AGENT_NAME,
         prompt_file="decomposition_extract_v1.txt",
@@ -170,17 +176,19 @@ def extract_prose_elements(
             )
         )
 
-    for constraint in result.constraints:
-        if constraint and constraint in question_text:
+    for sub_question in result.sub_questions:
+        if sub_question.text and sub_question.text in question_text:
             candidates.append(
                 ElementCandidate(
-                    kind="constraint",
-                    value_text=constraint,
-                    source_quote=constraint,
+                    kind="sub_question",
+                    value_text=sub_question.text,
+                    source_quote=sub_question.text,
                     extraction_method="llm",
+                    elaboration=sub_question.elaboration,
+                    answer_guidance=sub_question.answer_guidance,
                 )
             )
-        # Silently dropped if not a verbatim match — no fabricated constraint reaches the DB.
+        # Silently dropped if not a verbatim match — no fabricated sub-question reaches the DB.
 
     candidates.append(
         ElementCandidate(

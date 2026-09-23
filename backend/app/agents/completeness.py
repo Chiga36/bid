@@ -12,7 +12,7 @@ call; a quote that doesn't check out downgrades the result to "unverified" in co
 the model again. A cheap lexical pre-filter can short-circuit a trivially missing element straight
 to "missing" without spending an LLM call on it at all.
 
-Only `preamble` and `constraint` elements are real prose requirements a draft can "address" —
+Only `preamble` and `sub_question` elements are real prose requirements a draft can "address" —
 `word_limit`/`diagram_limit` are already checked numerically by Deterministic checks, and
 `weight`/`theme` are classification metadata, not content. Running those through this agent
 produced confusing, occasionally self-contradicting results in practice (e.g. a word-limit
@@ -32,7 +32,7 @@ from app.models import CompletenessCheckResult
 
 AGENT_NAME = "completeness"
 
-COMPLETENESS_ELEMENT_KINDS = ("preamble", "constraint")
+COMPLETENESS_ELEMENT_KINDS = ("preamble", "sub_question")
 
 _STOPWORDS = {
     "the", "and", "for", "with", "that", "this", "your", "you", "will", "must", "from",

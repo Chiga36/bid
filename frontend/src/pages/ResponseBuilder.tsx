@@ -70,6 +70,8 @@ export default function ResponseBuilder() {
   const selectedDraft = drafts.find((d) => d.id === selectedDraftId) ?? null;
   const hasUnsavedChanges = selectedDraft ? selectedDraft.content_text !== editorText : editorText.length > 0;
   const isLocked = elements.length > 0 && elements.every((e) => e.locked);
+  const subQuestionElements = elements.filter((e) => e.kind === "sub_question");
+  const otherElements = elements.filter((e) => e.kind !== "sub_question");
 
   function resetCoachResults() {
     setCompleteness(null);
@@ -211,14 +213,41 @@ export default function ResponseBuilder() {
               {isLocked && <StatusPill status="ready" label="Locked" />}
             </div>
 
-            {elements.length > 0 && (
+            {otherElements.length > 0 && (
               <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600">
-                {elements.map((el) => (
+                {otherElements.map((el) => (
                   <div key={el.id} className="flex items-center justify-between border-b border-slate-100 py-1 last:border-0">
                     <span>
                       <span className="font-medium">{el.kind}</span>: {el.value_text}
                     </span>
                     {el.locked && <StatusPill status="ready" label="locked" />}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {subQuestionElements.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {subQuestionElements.map((el, i) => (
+                  <div key={el.id} className="rounded-md border border-slate-200 bg-white p-2 text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium text-slate-800">
+                        Sub-question {i + 1}: <span className="font-normal">{el.value_text}</span>
+                      </p>
+                      {el.locked && <StatusPill status="ready" label="locked" />}
+                    </div>
+                    {el.elaboration && (
+                      <p className="mt-1 pl-3 text-slate-600">
+                        <span className="font-medium text-slate-500">What this is asking: </span>
+                        {el.elaboration}
+                      </p>
+                    )}
+                    {el.answer_guidance && (
+                      <p className="mt-1 pl-3 text-slate-600">
+                        <span className="font-medium text-slate-500">Suggested structure: </span>
+                        {el.answer_guidance}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -312,13 +341,13 @@ export default function ResponseBuilder() {
           disabled={coachDisabled}
           onClick={handleThemeReview}
         />
-        {themeReview && <ThemeReviewPanel review={themeReview} />}
+        {themeReview && <ThemeReviewPanel review={themeReview} subQuestions={subQuestionElements.map((e) => e.value_text)} />}
       </div>
     </div>
   );
 }
 
-function ThemeReviewPanel({ review }: { review: ThemeReview }) {
+function ThemeReviewPanel({ review, subQuestions }: { review: ThemeReview; subQuestions: string[] }) {
   return (
     <div className="flex flex-col gap-3 rounded-md border border-slate-200 p-3 text-xs">
       <div>
@@ -350,11 +379,28 @@ function ThemeReviewPanel({ review }: { review: ThemeReview }) {
       {review.gaps.length > 0 && (
         <div>
           <p className="font-semibold text-slate-700">Gaps</p>
-          <ul className="mt-1 list-disc space-y-0.5 pl-4 text-slate-600">
-            {review.gaps.map((g, i) => (
-              <li key={i}>{g}</li>
-            ))}
-          </ul>
+          <div className="mt-1 flex flex-col gap-2">
+            {review.gaps.map((g, i) => {
+              const matchedIndex = subQuestions.indexOf(g.sub_question);
+              const number = matchedIndex >= 0 ? matchedIndex + 1 : i + 1;
+              return (
+                <div key={i} className="rounded-md border border-slate-100 bg-slate-50 p-2">
+                  <p>
+                    <span className="font-semibold text-slate-700">Sub-question {number}: </span>
+                    {g.sub_question}
+                  </p>
+                  <p className="mt-0.5">
+                    <span className="font-semibold text-slate-700">Answer {number}: </span>
+                    {g.answer_excerpt ? g.answer_excerpt : <span className="italic text-slate-400">— not addressed —</span>}
+                  </p>
+                  <p className="mt-0.5">
+                    <span className="font-semibold text-slate-700">Gap {number}: </span>
+                    {g.gap}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 BandValue = Literal[0, 25, 50, 75, 100]
 QuestionCategory = Literal["sq", "pass_fail", "scored"]
-ElementKind = Literal["preamble", "constraint", "word_limit", "diagram_limit", "weight", "theme"]
+ElementKind = Literal["preamble", "sub_question", "word_limit", "diagram_limit", "weight", "theme"]
 CompletenessStatus = Literal["addressed", "asserted_only", "missing", "unverified"]
 Confidence = Literal["high", "low"]
 TenderRequirementCategory = Literal[
@@ -75,6 +75,8 @@ class ElementOut(BaseModel):
     kind: ElementKind
     value_text: str
     source_quote: Optional[str] = None
+    elaboration: Optional[str] = None
+    answer_guidance: Optional[str] = None
     extraction_method: Literal["rule", "llm"]
     locked: bool
 
@@ -118,13 +120,28 @@ class ScoringSummaryOut(BaseModel):
 # These are passed straight to llm_client.call_structured() as the target shape.
 # ---------------------------------------------------------------------------
 
+class SubQuestionExtraction(BaseModel):
+    """One decomposed sub-question. `text` MUST be a verbatim substring of the source question —
+    the agent verifies this and drops anything that isn't, before it reaches the DB.
+    `elaboration` and `answer_guidance` are genuine synthesis (the model's own words), never
+    substring-checked — same treatment as Theme Review's prose fields."""
+
+    text: str = Field(description="Verbatim sub-question text, an exact substring of the source question")
+    elaboration: str = Field(
+        description="Plain-language explanation of what this sub-question is really asking the bidder to demonstrate or prove"
+    )
+    answer_guidance: str = Field(
+        description="A concrete, practical suggestion for how to structure the answer to this specific sub-question"
+    )
+
+
 class DecompositionExtraction(BaseModel):
     """Output of the Decomposition agent's prose-extraction LLM call.
-    preamble/constraints MUST be verbatim substrings of the source question text —
+    preamble/sub_questions[].text MUST be verbatim substrings of the source question text —
     llm_client verifies this and drops anything that isn't, before it reaches the DB."""
 
     preamble: Optional[str] = Field(default=None, description="Verbatim preamble sentence, if present")
-    constraints: List[str] = Field(default_factory=list, description="Verbatim constraint sentences")
+    sub_questions: List[SubQuestionExtraction] = Field(default_factory=list)
     theme: Theme
 
 
@@ -274,17 +291,32 @@ class PrioritisedImprovement(BaseModel):
     description: str
 
 
+class GapEntry(BaseModel):
+    """One gap, explicitly anchored to the sub-question it concerns and the piece of the draft
+    it's based on. `sub_question` and `gap` are synthesis (not substring-checked); `answer_excerpt`
+    IS verbatim-verified against the draft by the agent after the call — same treatment
+    Completeness gives its own quotes — and blanked (not dropped) if it doesn't check out, since
+    the gap itself is still valid even when the model's quote wasn't."""
+
+    sub_question: str = Field(description="Copied exactly from the numbered sub-question list provided")
+    answer_excerpt: str = Field(
+        description="Verbatim quote from the draft addressing (or attempting to address) this sub-question; empty string if the draft doesn't address it at all"
+    )
+    gap: str = Field(description="What's missing or weak for this sub-question, in evaluator voice")
+
+
 class ThemeReviewResult(BaseModel):
     """Output of the Theme Review agent — one shared shape across all seven theme prompts, per
     the toolkit's own 'Standard output required from every skill' section. Genuine synthesis
     (a summary, suggested wording, an improved plan), not verbatim extraction — there is nothing
-    here to substring-verify the way Decomposition/Completeness do; the no-fabrication discipline
-    stays at the prompt level, matching the toolkit's own instruction not to invent evidence."""
+    here to substring-verify the way Decomposition/Completeness do, except `gaps[].answer_excerpt`
+    (see GapEntry); the no-fabrication discipline for everything else stays at the prompt level,
+    matching the toolkit's own instruction not to invent evidence."""
 
     theme_fit: str
     evaluator_summary: str
     strengths: List[str]
-    gaps: List[str]
+    gaps: List[GapEntry]
     prioritised_improvements: List[PrioritisedImprovement]
     suggested_wording: List[str]
     evidence_required: List[str]

@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException
 from app import vector_store
 from app.agents.theme_review import run_theme_review
 from app.db import db_session
-from app.models import PrioritisedImprovement, Theme, ThemeReviewOut
+from app.models import GapEntry, PrioritisedImprovement, Theme, ThemeReviewOut
 
 router = APIRouter(tags=["theme-review"])
 
@@ -26,7 +26,7 @@ def _row_to_out(row: dict) -> ThemeReviewOut:
         theme_fit=row["theme_fit"],
         evaluator_summary=row["evaluator_summary"],
         strengths=json.loads(row["strengths"]),
-        gaps=json.loads(row["gaps"]),
+        gaps=[GapEntry(**g) for g in json.loads(row["gaps"])],
         prioritised_improvements=[PrioritisedImprovement(**p) for p in json.loads(row["prioritised_improvements"])],
         suggested_wording=json.loads(row["suggested_wording"]),
         evidence_required=json.loads(row["evidence_required"]),
@@ -67,6 +67,11 @@ def create_theme_review(draft_id: int):
             (draft["question_id"],),
         ).fetchone()
 
+        sub_question_rows = conn.execute(
+            "SELECT value_text FROM elements WHERE question_id = ? AND kind = 'sub_question' AND locked = 1 ORDER BY id",
+            (draft["question_id"],),
+        ).fetchall()
+
         band_rows = conn.execute(
             "SELECT band_value, descriptor_text FROM scoring_bands WHERE tender_id = ? ORDER BY band_value",
             (question["tender_id"],),
@@ -74,6 +79,7 @@ def create_theme_review(draft_id: int):
 
     evaluation_criteria = _format_evaluation_criteria(band_rows)
     word_limit = word_limit_row["value_text"] if word_limit_row else ""
+    sub_questions = [r["value_text"] for r in sub_question_rows]
     evidence_chunks = vector_store.query_evidence(question["tender_id"], question["question_text"], top_k=3)
     evidence_context = "\n---\n".join(evidence_chunks)
 
@@ -84,6 +90,7 @@ def create_theme_review(draft_id: int):
         word_limit=word_limit,
         draft_text=draft["content_text"],
         evidence_context=evidence_context,
+        sub_questions=sub_questions,
     )
 
     with db_session() as conn:
@@ -102,7 +109,7 @@ def create_theme_review(draft_id: int):
                 result.theme_fit,
                 result.evaluator_summary,
                 json.dumps(result.strengths),
-                json.dumps(result.gaps),
+                json.dumps([g.model_dump() for g in result.gaps]),
                 json.dumps([p.model_dump() for p in result.prioritised_improvements]),
                 json.dumps(result.suggested_wording),
                 json.dumps(result.evidence_required),

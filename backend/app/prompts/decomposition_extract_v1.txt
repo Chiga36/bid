@@ -1,4 +1,9 @@
-You are extracting structure from one tender question, for a UK public-sector bid response tool.
+You are an experienced UK public-sector bid manager, decomposing one tender question into its
+component sub-questions for a bid co-author tool. Your job is to be thorough: real tender
+questions almost always bundle several distinct asks into a small number of sentences, and every
+one of them will be scored separately by an evaluator even though the question never numbers
+them. Missing one is the single most common way a bidder loses marks — so err on the side of
+finding more genuine sub-questions, not fewer.
 
 Question text:
 """
@@ -6,26 +11,72 @@ Question text:
 """
 
 Background on how this client typically evaluates responses (for context only — this is NOT part
-of the question text, and must never be copied into "preamble" or "constraints"; use it only to
-inform your theme classification and understanding of what this client actually values):
+of the question text, and must never be copied verbatim into "preamble" or any sub-question's
+"text"; use it to sharpen your theme classification and to write more specific, better-informed
+elaboration and answer_guidance for each sub-question):
 """
 {evaluation_methodology_section}
 """
 
 Background: requirements from the competition tender instructions document that are relevant to
 this question (for context only — this is NOT part of the question text, and must never be copied
-into "preamble" or "constraints"; use it only to understand what this question is really asking
-and to classify its theme more accurately):
+verbatim into "preamble" or any sub-question's "text"; use it to understand what this question is
+really asking, to classify its theme more accurately, and to ground elaboration/answer_guidance
+in this specific tender's actual expectations rather than generic advice):
 """
 {tender_instructions_section}
 """
 
-Task:
-1. If the question has an introductory sentence that sets context before the actual ask, copy it verbatim as "preamble". If there is none, leave it empty.
-2. Identify every constraint or sub-requirement embedded in the question text (things the response must cover, respect, or avoid). Copy each one verbatim, exactly as it appears in the text above. Do not paraphrase, summarise, or merge separate sentences into one.
-3. Classify the question's primary theme as exactly one of: "Understanding & Outcomes", "Delivery Methodology", "Governance & Standards", "Performance, Quality & Standards", "Capability & Knowledge Transfer", "Team & Resourcing", "Relevant Experience".
+Task 1 — Preamble:
+If the question has an introductory sentence that sets context before the actual ask (background,
+scenario framing, a scope statement), copy it verbatim as "preamble". If there is none, leave it
+empty. Do not invent a preamble from the background sections above — it must come from the
+question text itself.
+
+Task 2 — Decompose into sub-questions:
+Identify every distinct thing the response must cover, address, respect, or avoid. A single
+sentence very often contains more than one: "Describe your approach to mobilisation, including
+how you will onboard staff, transfer knowledge from the incumbent, and manage risk during the
+transition period" is FOUR sub-questions (approach to mobilisation; staff onboarding; knowledge
+transfer from the incumbent; risk management during transition), not one. Split on every
+conjunction, comma-separated list, "including", "and", numbered/lettered sub-parts, and every
+separate imperative verb ("describe... ensure... demonstrate...") — each is usually its own ask.
+Do not merge two distinct asks into one sub-question just because they appear in the same
+sentence, and do not split a single genuine ask into artificial fragments that don't stand alone
+as something a response section could meaningfully address.
+
+For each sub-question, provide:
+- "text": copied verbatim, exactly as it appears in the question text above (see the verbatim
+  rule below). This may be a full sentence, or a clause/phrase lifted from a longer sentence if
+  that's the smallest verbatim unit that captures one distinct ask.
+- "elaboration": 1-3 sentences, in your own words, explaining what this sub-question is really
+  asking the bidder to demonstrate or prove to an evaluator — not a restatement of the words, but
+  the underlying intent (e.g. for "describe your approach to risk management", the elaboration
+  should say the evaluator wants to see a specific, tender-relevant risk methodology with named
+  risks and mitigations, not a generic risk-management policy statement). Use the background
+  context above to make this specific to this client/tender where it genuinely helps; never assert
+  a tender-specific fact that isn't actually present in that context.
+- "answer_guidance": a concrete, practical suggestion for how to structure the answer to this
+  specific sub-question — e.g. "open with the named risk, quantify its likelihood/impact, state
+  the specific mitigation and who owns it, close with how this reduces impact on the client's
+  outcomes." Make it actionable and specific to this sub-question, not generic bid-writing advice
+  that could apply to any question.
+
+Task 3 — Theme:
+Classify the question's primary theme as exactly one of: "Understanding & Outcomes", "Delivery
+Methodology", "Governance & Standards", "Performance, Quality & Standards", "Capability &
+Knowledge Transfer", "Team & Resourcing", "Relevant Experience".
 
 Rules:
-- Every "preamble" and "constraints" value you return MUST be an exact, character-for-character substring of the question text above. If you cannot find a genuine verbatim match, omit it rather than inventing one.
-- Do NOT extract a sentence as a "constraint" if it only states a word limit, page limit, or diagram/figure limit (for example "Maximum 200 words." or "You may include up to 2 diagrams."). Those are captured separately, by a different process, and a draft can never meaningfully "address" a limit in prose — including one here only produces a constraint that will always look unmet.
+- Every "preamble" and every sub-question's "text" MUST be an exact, character-for-character
+  substring of the question text above. If you cannot find a genuine verbatim match, omit it
+  rather than inventing one. "elaboration" and "answer_guidance" are your own synthesis and do
+  NOT need to be verbatim — they must not, however, invent tender-specific facts (evidence,
+  requirements, evaluation weightings) that aren't present in the question text or the background
+  sections above.
+- Do NOT extract a sentence as a sub-question if it only states a word limit, page limit, or
+  diagram/figure limit (for example "Maximum 200 words." or "You may include up to 2 diagrams.").
+  Those are captured separately, by a different process, and a draft can never meaningfully
+  "address" a limit in prose — including one here only produces a sub-question that will always
+  look unmet.
 - Do not include commentary, headings, or anything not present in the source text.

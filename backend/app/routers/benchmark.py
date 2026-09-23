@@ -67,7 +67,7 @@ def run_case(case_id: int):
         if not locked_elements:
             raise HTTPException(
                 status_code=400,
-                detail="This question has no locked preamble/constraint elements. Decompose and lock it first.",
+                detail="This question has no locked preamble/sub-question elements. Decompose and lock it first.",
             )
 
         band_rows = conn.execute(

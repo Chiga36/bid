@@ -74,10 +74,16 @@ def decompose_question(question_id: int):
         for c in candidates:
             cur = conn.execute(
                 """
-                INSERT INTO elements (question_id, kind, value_text, source_quote, extraction_method, locked)
-                VALUES (?, ?, ?, ?, ?, 0)
+                INSERT INTO elements (
+                    question_id, kind, value_text, source_quote, elaboration, answer_guidance,
+                    extraction_method, locked
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, 0)
                 """,
-                (question_id, c.kind, c.value_text, c.source_quote, c.extraction_method),
+                (
+                    question_id, c.kind, c.value_text, c.source_quote, c.elaboration, c.answer_guidance,
+                    c.extraction_method,
+                ),
             )
             row = conn.execute("SELECT * FROM elements WHERE id = ?", (cur.lastrowid,)).fetchone()
             created.append(dict(row))

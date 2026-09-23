@@ -4,7 +4,7 @@
 
 export type BandValue = 0 | 25 | 50 | 75 | 100;
 export type QuestionCategory = "sq" | "pass_fail" | "scored";
-export type ElementKind = "preamble" | "constraint" | "word_limit" | "diagram_limit" | "weight" | "theme";
+export type ElementKind = "preamble" | "sub_question" | "word_limit" | "diagram_limit" | "weight" | "theme";
 export type CompletenessStatus = "addressed" | "asserted_only" | "missing" | "unverified";
 export type Confidence = "high" | "low";
 
@@ -37,6 +37,8 @@ export interface ElementRow {
   kind: ElementKind;
   value_text: string;
   source_quote: string | null;
+  elaboration: string | null;
+  answer_guidance: string | null;
   extraction_method: "rule" | "llm";
   locked: boolean;
 }
@@ -114,12 +116,18 @@ export interface PrioritisedImprovement {
   description: string;
 }
 
+export interface GapEntry {
+  sub_question: string;
+  answer_excerpt: string;
+  gap: string;
+}
+
 export interface ThemeReview {
   theme: string;
   theme_fit: string;
   evaluator_summary: string;
   strengths: string[];
-  gaps: string[];
+  gaps: GapEntry[];
   prioritised_improvements: PrioritisedImprovement[];
   suggested_wording: string[];
   evidence_required: string[];
