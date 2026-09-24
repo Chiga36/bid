@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import Layout from "./components/Layout";
-import AgentSkills from "./pages/AgentSkills";
+import AgentOverview from "./pages/AgentOverview";
 import CompetitionInfo from "./pages/CompetitionInfo";
 import DataIngestion from "./pages/DataIngestion";
 import ResponseBuilder from "./pages/ResponseBuilder";
@@ -16,7 +16,7 @@ export default function App() {
         <Route path="/ingestion" element={<DataIngestion />} />
         <Route path="/status" element={<StatusReport />} />
         <Route path="/info" element={<CompetitionInfo />} />
-        <Route path="/skills" element={<AgentSkills />} />
+        <Route path="/skills" element={<AgentOverview />} />
       </Route>
     </Routes>
   );
