@@ -1,6 +1,8 @@
 """Unit tests for the Completeness agent's guardrails: the quote-substring check and the
-lexical pre-filter. The Azure OpenAI call itself is monkeypatched out — these tests prove the
-*wrapper* logic catches a fabricated quote, not that the model behaves well."""
+empty-draft short-circuit in run_completeness (the only case that skips a model call — see
+app/agents/completeness.py's docstring for why the old keyword-overlap pre-filter was removed).
+The Azure OpenAI call itself is monkeypatched out — these tests prove the *wrapper* logic catches
+a fabricated quote, not that the model behaves well."""
 from app.agents import completeness
 from app.models import CompletenessCheckResult
 
@@ -59,13 +61,37 @@ def test_missing_with_empty_quote_is_verified_trivially(monkeypatch):
     assert result.verified is True
 
 
-def test_lexical_prefilter_flags_trivially_missing():
-    element_text = "Describe your cyber security incident response procedure."
-    draft_text = "This draft only discusses pricing and commercial terms."
-    assert completeness.lexical_prefilter(element_text, draft_text) is False
+def test_empty_draft_short_circuits_every_element_without_a_model_call(monkeypatch):
+    def fail_if_called(**kwargs):
+        raise AssertionError("the model should never be called for an empty draft")
+
+    monkeypatch.setattr(completeness.llm_client, "call_structured", fail_if_called)
+
+    results = completeness.run_completeness(
+        draft_text="   ",
+        elements=[{"id": 1, "value_text": "Describe your cyber security incident response procedure."}],
+    )
+    assert len(results) == 1
+    assert results[0].status == "missing"
+    assert results[0].verified is True
 
 
-def test_lexical_prefilter_passes_when_overlap_exists():
-    element_text = "Describe your cyber security incident response procedure."
-    draft_text = "Our incident response procedure follows ISO 27001 security controls."
-    assert completeness.lexical_prefilter(element_text, draft_text) is True
+def test_non_empty_draft_always_goes_to_the_model_even_with_no_word_overlap(monkeypatch):
+    # This is the regression case: a draft that addresses the requirement using entirely
+    # different vocabulary ("measures" vs "metrics") must still reach the model, not get
+    # silently marked "missing" by a keyword heuristic.
+    def fake_call_structured(**kwargs):
+        return CompletenessCheckResult(
+            status="addressed",
+            quote="We track a comprehensive set of measures across delivery performance.",
+            rationale="The draft addresses this via its measures framework, using different wording for the same concept.",
+        )
+
+    monkeypatch.setattr(completeness.llm_client, "call_structured", fake_call_structured)
+
+    results = completeness.run_completeness(
+        draft_text="We track a comprehensive set of measures across delivery performance.",
+        elements=[{"id": 1, "value_text": "The KPIs and metrics you will apply."}],
+    )
+    assert len(results) == 1
+    assert results[0].status == "addressed"

@@ -28,4 +28,10 @@ Task: classify this requirement as exactly one of:
 Rules:
 - You MUST quote the exact sentence (or short passage) from the draft text above that led to your judgement, copied character-for-character. If the requirement is "missing", quote the nearest relevant sentence if one exists, or return an empty string if nothing in the draft relates to it at all.
 - Do not invent, paraphrase, or reconstruct a quote from memory — it must be a verbatim substring of the draft text given above.
-- Give a one- or two-sentence rationale for your classification.
+- Give a detailed, elaborate rationale for your classification (several sentences, not a
+  one-liner): state specifically what in the draft does or doesn't satisfy this requirement, and
+  if it's "missing" or "asserted_only", state specifically what would need to be added to make it
+  "addressed". Judge by meaning, not by matching words — the draft may use different vocabulary
+  than the requirement's own wording and still genuinely address it (e.g. a requirement asking
+  about "metrics" is addressed by a draft that consistently discusses "measures" instead, if the
+  substance is the same); do not mark something "missing" just because the exact words differ.

@@ -299,9 +299,30 @@ export default function ResponseBuilder() {
 
         <CoachAction label="Check completeness" busy={busyAction === "completeness"} disabled={coachDisabled} onClick={handleCheckCompleteness} />
         {completeness && (
-          <ResultList
-            items={completeness.map((c) => ({ key: `el-${c.element_id}`, status: c.status, detail: c.rationale ?? "" }))}
-          />
+          <div className="flex flex-col gap-2">
+            <CompletenessLegend />
+            {completeness.map((c) => {
+              const element = elements.find((e) => e.id === c.element_id);
+              return (
+                <details
+                  key={c.element_id}
+                  className="group rounded-md border border-slate-200 text-xs [&::-webkit-details-marker]:hidden"
+                >
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-2 p-2 font-medium text-slate-800">
+                    <span className="flex items-start gap-1.5">
+                      <span className="mt-0.5 text-slate-400 transition-transform group-open:rotate-90">▸</span>
+                      <span>{element ? element.value_text : `Element ${c.element_id}`}</span>
+                    </span>
+                    <CompletenessSymbol status={c.status} />
+                  </summary>
+                  <div className="border-t border-slate-100 p-2 text-slate-600">
+                    {c.quote && <p className="text-slate-500">Quote: "{c.quote}"</p>}
+                    {c.rationale && <p className="mt-1">{c.rationale}</p>}
+                  </div>
+                </details>
+              );
+            })}
+          </div>
         )}
 
         <CoachAction label="Suggest indicative score" busy={busyAction === "score"} disabled={coachDisabled} onClick={handleScore} />
@@ -357,12 +378,12 @@ function ThemeReviewPanel({ review, subQuestions }: { review: ThemeReview; subQu
 
       <p className="text-slate-600">{review.evaluator_summary}</p>
 
-      <div className="grid grid-cols-5 gap-1 text-center">
-        <ScoreTile label="Compliance" value={review.score_compliance} />
-        <ScoreTile label="Practical" value={review.score_practicality} />
-        <ScoreTile label="Evidence" value={review.score_evidence} />
-        <ScoreTile label="Specificity" value={review.score_client_specificity} />
-        <ScoreTile label="Confidence" value={review.score_evaluator_confidence} />
+      <div className="flex flex-col gap-1 rounded-md border border-slate-100 p-2">
+        <ScoreRow label="Compliance" value={review.score_compliance} />
+        <ScoreRow label="Practicality" value={review.score_practicality} />
+        <ScoreRow label="Evidence" value={review.score_evidence} />
+        <ScoreRow label="Client specificity" value={review.score_client_specificity} />
+        <ScoreRow label="Evaluator confidence" value={review.score_evaluator_confidence} />
       </div>
 
       {review.strengths.length > 0 && (
@@ -491,12 +512,25 @@ function ScoringRationale({ runs, usedModerator }: { runs: ScoringRun[]; usedMod
   );
 }
 
-function ScoreTile({ label, value }: { label: string; value: number }) {
+function ScoreRow({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md bg-slate-50 py-1.5">
-      <p className="text-sm font-semibold text-slate-800">{value}/5</p>
-      <p className="text-[10px] uppercase tracking-wide text-slate-400">{label}</p>
+    <div className="flex items-center justify-between gap-2 py-0.5">
+      <span className="text-slate-500">{label}</span>
+      <span className="flex items-center gap-1.5">
+        <ScoreDots value={value} />
+        <span className="w-6 text-right font-semibold text-slate-800">{value}/5</span>
+      </span>
     </div>
+  );
+}
+
+function ScoreDots({ value }: { value: number }) {
+  return (
+    <span className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <span key={n} className={`h-1.5 w-1.5 rounded-full ${n <= value ? "bg-brand-500" : "bg-slate-200"}`} />
+      ))}
+    </span>
   );
 }
 
@@ -519,6 +553,35 @@ function CoachAction({
     >
       {busy ? "Running..." : label}
     </button>
+  );
+}
+
+const COMPLETENESS_SYMBOLS: Record<string, { symbol: string; className: string; label: string }> = {
+  addressed: { symbol: "✓", className: "text-emerald-600", label: "Addressed" },
+  asserted_only: { symbol: "~", className: "text-amber-600", label: "Asserted only — claimed but not explained" },
+  missing: { symbol: "✗", className: "text-rose-600", label: "Missing" },
+  unverified: { symbol: "?", className: "text-rose-600", label: "Unverified — quote didn't check out" },
+};
+
+function CompletenessSymbol({ status }: { status: string }) {
+  const entry = COMPLETENESS_SYMBOLS[status] ?? { symbol: "•", className: "text-slate-400", label: status };
+  return (
+    <span className={`shrink-0 text-sm font-bold ${entry.className}`} title={entry.label}>
+      {entry.symbol}
+    </span>
+  );
+}
+
+function CompletenessLegend() {
+  return (
+    <div className="flex flex-wrap gap-x-3 gap-y-1 rounded-md bg-slate-50 p-2 text-[11px] text-slate-500">
+      {Object.values(COMPLETENESS_SYMBOLS).map((entry) => (
+        <span key={entry.label} className="flex items-center gap-1">
+          <span className={`text-sm font-bold ${entry.className}`}>{entry.symbol}</span>
+          {entry.label}
+        </span>
+      ))}
+    </div>
   );
 }
 

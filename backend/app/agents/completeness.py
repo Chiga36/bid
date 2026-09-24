@@ -9,8 +9,16 @@ background context, the same enrichment pattern used by Decomposition. This info
 only; the verdict taxonomy and quote-verification guard below are unchanged. Every claimed quote
 is verified as a real substring of the draft with a plain string check immediately after the
 call; a quote that doesn't check out downgrades the result to "unverified" in code, not by asking
-the model again. A cheap lexical pre-filter can short-circuit a trivially missing element straight
-to "missing" without spending an LLM call on it at all.
+the model again.
+
+Only one case ever short-circuits straight to "missing" without a model call: an empty draft.
+Every other draft, however sparse, goes to the model. An earlier version of this agent also
+short-circuited on a cheap keyword-overlap heuristic (no fuzzy match between the element's own
+words and the draft anywhere) — that produced real false "missing" verdicts whenever the draft
+addressed the same requirement with different vocabulary than the element's own wording (e.g. an
+element asking about "metrics" against a draft that consistently says "measures" instead — same
+concept, zero lexical overlap, wrongly hidden from the bid manager). Correctness matters more here
+than the handful of LLM calls that heuristic saved, so it was removed rather than tuned.
 
 Only `preamble` and `sub_question` elements are real prose requirements a draft can "address" —
 `word_limit`/`diagram_limit` are already checked numerically by Deterministic checks, and
@@ -25,21 +33,12 @@ kept here, not duplicated per call site, so the two stay in sync.
 from dataclasses import dataclass
 from typing import List, Optional
 
-from rapidfuzz import fuzz
-
 from app import llm_client, vector_store
 from app.models import CompletenessCheckResult
 
 AGENT_NAME = "completeness"
 
 COMPLETENESS_ELEMENT_KINDS = ("preamble", "sub_question")
-
-_STOPWORDS = {
-    "the", "and", "for", "with", "that", "this", "your", "you", "will", "must", "from",
-    "have", "shall", "should", "into", "their", "which", "such", "each", "when", "where",
-}
-_MIN_TOKEN_LEN = 4
-_FUZZY_THRESHOLD = 80
 
 
 @dataclass
@@ -49,22 +48,6 @@ class CompletenessResultRow:
     quote: str
     rationale: str
     verified: bool
-
-
-def _key_terms(element_value_text: str) -> List[str]:
-    tokens = [t.strip(".,:;()").lower() for t in element_value_text.split()]
-    return [t for t in tokens if len(t) >= _MIN_TOKEN_LEN and t not in _STOPWORDS]
-
-
-def lexical_prefilter(element_value_text: str, draft_text: str) -> bool:
-    """Returns False only when NONE of the element's key terms have any plausible match anywhere
-    in the draft — the cheap, obvious "missing" case. Returns True whenever there's enough
-    overlap that the addressed-vs-asserted-only judgement genuinely needs the model."""
-    terms = _key_terms(element_value_text)
-    if not terms:
-        return True  # nothing to check lexically; let the model decide
-    draft_lower = draft_text.lower()
-    return any(fuzz.partial_ratio(term, draft_lower) >= _FUZZY_THRESHOLD for term in terms)
 
 
 def _format_background_section(context: str) -> str:
@@ -111,15 +94,16 @@ def run_completeness(
     elements: List[dict],  # each: {"id": int, "value_text": str}
     tender_id: Optional[int] = None,
 ) -> List[CompletenessResultRow]:
+    draft_is_empty = not draft_text.strip()
     results: List[CompletenessResultRow] = []
     for element in elements:
-        if not lexical_prefilter(element["value_text"], draft_text):
+        if draft_is_empty:
             results.append(
                 CompletenessResultRow(
                     element_id=element["id"],
                     status="missing",
                     quote="",
-                    rationale="No overlapping terms found between this requirement and the draft.",
+                    rationale="The draft is empty — nothing has been written yet.",
                     verified=True,
                 )
             )
