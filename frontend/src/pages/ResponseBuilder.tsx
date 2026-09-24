@@ -84,16 +84,41 @@ export default function ResponseBuilder() {
     setActionError(null);
   }
 
-  async function withBusy(action: string, fn: () => Promise<void>) {
+  // `retryable` covers every agent action here except draft creation: re-running Decompose,
+  // Completeness, Scoring, etc. is always safe (they either overwrite unlocked state or just
+  // produce a fresh assessment — see each endpoint's own idempotency notes). Silently retrying
+  // absorbs the kind of one-off transient hiccup that previously needed a second manual click
+  // (e.g. a backend agent's first call in a while doing some one-time setup) without the user
+  // ever seeing it. `createDraft`, by contrast, is NOT idempotent — a silent retry after a
+  // response that failed to arrive (but whose request the server actually completed) would
+  // create a genuine duplicate version, so save explicitly opts out.
+  async function withBusy(action: string, fn: () => Promise<void>, retryable = true) {
     setBusyAction(action);
     setActionError(null);
     try {
       await fn();
-    } catch (err) {
-      setActionError((err as Error).message);
+    } catch (firstErr) {
+      if (!retryable) {
+        reportActionError(firstErr);
+      } else {
+        try {
+          await fn();
+        } catch (err) {
+          reportActionError(err);
+        }
+      }
     } finally {
       setBusyAction(null);
     }
+  }
+
+  function reportActionError(err: unknown) {
+    // A failed fetch (e.g. the backend process dying mid-request) can surface as an Error with
+    // an empty .message — `actionError && <p>...` would then render nothing at all, silently
+    // resetting the button with no visible sign anything went wrong. Never let that happen:
+    // always show *something* if a coach action actually failed.
+    const message = err instanceof Error && err.message ? err.message : "Something went wrong — please try again.";
+    setActionError(message);
   }
 
   async function handleDecompose() {
@@ -114,13 +139,23 @@ export default function ResponseBuilder() {
 
   async function handleSaveVersion() {
     if (!selectedQuestionId) return;
-    await withBusy("save", async () => {
-      const draft = await createDraft(selectedQuestionId, editorText);
-      const ds = await listDrafts(selectedQuestionId);
-      setDrafts(ds);
-      setSelectedDraftId(draft.id);
-      resetCoachResults();
-    });
+    // retryable=false: unlike every other action here, creating a draft is not idempotent — a
+    // silent retry after a response that simply failed to arrive (but whose request the server
+    // had already completed) would create a genuine duplicate version in the history.
+    await withBusy(
+      "save",
+      async () => {
+        const draft = await createDraft(selectedQuestionId, editorText);
+        const ds = await listDrafts(selectedQuestionId);
+        setDrafts(ds);
+        setSelectedDraftId(draft.id);
+        resetCoachResults();
+        // Mark this question's green submitted-version dot immediately rather than waiting on a
+        // full re-fetch of the questions list.
+        setQuestions((prev) => prev.map((q) => (q.id === selectedQuestionId ? { ...q, has_draft: true } : q)));
+      },
+      false
+    );
   }
 
   function handleSelectVersion(draft: Draft) {
@@ -160,6 +195,7 @@ export default function ResponseBuilder() {
   }
 
   const coachDisabled = !selectedDraftId || hasUnsavedChanges;
+  const attemptedCount = questions.filter((q) => q.has_draft).length;
 
   if (!selectedTenderId) {
     return <p className="text-sm text-slate-500">Create or select a tender first (top right).</p>;
@@ -169,7 +205,10 @@ export default function ResponseBuilder() {
     <div className="grid h-full grid-cols-[280px_1fr_320px] gap-4">
       {/* Left: questions */}
       <div className="flex flex-col gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-white p-3">
-        <p className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Questions</p>
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Questions</p>
+          {questions.length > 0 && <QuestionsProgress attempted={attemptedCount} total={questions.length} />}
+        </div>
         {questions.length === 0 && <p className="px-1 text-xs text-slate-400">No questions yet — add some via Data Ingestion.</p>}
         {questions.map((q) => (
           <button
@@ -179,7 +218,15 @@ export default function ResponseBuilder() {
               q.id === selectedQuestionId ? "border-brand-300 bg-brand-50" : "border-transparent hover:bg-slate-50"
             }`}
           >
-            <p className="font-medium text-slate-800">{q.title}</p>
+            <p className="flex items-center gap-1.5 font-medium text-slate-800">
+              {q.has_draft && (
+                <span
+                  title="At least one version submitted"
+                  className="h-2 w-2 shrink-0 rounded-full bg-emerald-500"
+                />
+              )}
+              <span className="truncate">{q.title}</span>
+            </p>
             <p className="mt-0.5 text-xs text-slate-400">{q.category}</p>
           </button>
         ))}
@@ -520,6 +567,41 @@ function ScoreRow({ label, value }: { label: string; value: number }) {
         <ScoreDots value={value} />
         <span className="w-6 text-right font-semibold text-slate-800">{value}/5</span>
       </span>
+    </div>
+  );
+}
+
+// "Attempted" = has_draft (see backend's GET /tenders/{id}/questions) — at least one version has
+// been saved for that question. A ring rather than a plain fraction since it's meant to be
+// glanceable — how far through the tender you are — not something you have to read closely.
+function QuestionsProgress({ attempted, total }: { attempted: number; total: number }) {
+  const size = 44;
+  const strokeWidth = 4.5;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const fraction = total > 0 ? attempted / total : 0;
+  const offset = circumference * (1 - fraction);
+
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }} title={`${attempted} of ${total} questions attempted`}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e2e8f0" strokeWidth={strokeWidth} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#00338D"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 0.3s ease" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold leading-none text-slate-700">
+        {attempted}/{total}
+      </div>
     </div>
   );
 }

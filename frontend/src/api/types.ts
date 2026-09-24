@@ -29,6 +29,7 @@ export interface Question {
   question_text: string;
   category: QuestionCategory;
   source_ref: string | null;
+  has_draft: boolean;
 }
 
 export interface ElementRow {

@@ -11,9 +11,12 @@ export default function Home() {
   const navigate = useNavigate();
 
   async function handleCreated(id: number) {
+    // New account -> straight to Data Ingestion, not Response Builder: there's nothing to draft
+    // yet, and this is the natural next step for a first-time user. Existing accounts (below)
+    // skip straight to Response Builder since they've presumably already been ingested.
     await refreshTenders();
     selectTender(id);
-    navigate("/builder");
+    navigate("/ingestion");
   }
 
   function handleSelect(id: number) {

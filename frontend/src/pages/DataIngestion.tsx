@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { uploadEvidence, uploadTenderDocument } from "../api/tenders";
 import FileDropzone from "../components/FileDropzone";
@@ -65,10 +66,23 @@ const STEPS: { n: Step; label: string; sub: string }[] = [
 
 export default function DataIngestion() {
   const { selectedTenderId } = useTender();
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>(1);
   const [filesByCategory, setFilesByCategory] = useState<FilesByCategory>({});
   const [running, setRunning] = useState(false);
   const [resultLog, setResultLog] = useState<string[]>([]);
+  const [redirecting, setRedirecting] = useState(false);
+
+  // Once ingestion has actually processed something, move the user on to Response Builder
+  // automatically after a moment — there's nothing more to do on this page, and for a
+  // first-time user this is the natural next step. A few seconds' delay (rather than instant)
+  // keeps the result log below on screen long enough to actually read; "Continue now" skips
+  // the wait for anyone who doesn't want it.
+  useEffect(() => {
+    if (!redirecting) return;
+    const timer = setTimeout(() => navigate("/builder"), 2500);
+    return () => clearTimeout(timer);
+  }, [redirecting, navigate]);
 
   const totalFiles = Object.values(filesByCategory).reduce((sum, files) => sum + files.length, 0);
   const missingMandatory = MANDATORY_CATEGORY_KEYS.filter((key) => (filesByCategory[key] ?? []).length === 0);
@@ -93,6 +107,7 @@ export default function DataIngestion() {
     if (!selectedTenderId) return;
     setRunning(true);
     const log: string[] = [];
+    let successCount = 0;
 
     for (const category of ALL_CATEGORIES) {
       const files = filesByCategory[category.key] ?? [];
@@ -105,6 +120,7 @@ export default function DataIngestion() {
             const result = await uploadEvidence(selectedTenderId, file, category.key);
             log.push(`${category.title}: "${file.name}" -> ${result.chunks_ingested} evidence chunk(s) ingested.`);
           }
+          successCount += 1;
         } catch (err) {
           log.push(`${category.title}: "${file.name}" failed — ${(err as Error).message}`);
         }
@@ -116,6 +132,11 @@ export default function DataIngestion() {
     }
     setResultLog(log);
     setRunning(false);
+    // Only auto-advance if something actually succeeded — if every upload failed, stay put so
+    // the errors above are visible and actionable rather than scrolled away from.
+    if (successCount > 0) {
+      setRedirecting(true);
+    }
   }
 
   if (!selectedTenderId) {
@@ -244,6 +265,18 @@ export default function DataIngestion() {
                       <li key={i}>{line}</li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {redirecting && (
+                <div className="flex items-center justify-between rounded-lg border border-brand-200 bg-brand-50 px-4 py-3">
+                  <span className="text-sm text-brand-700">Taking you to Response Builder...</span>
+                  <button
+                    onClick={() => navigate("/builder")}
+                    className="rounded-md bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600"
+                  >
+                    Continue now →
+                  </button>
                 </div>
               )}
             </StepBody>

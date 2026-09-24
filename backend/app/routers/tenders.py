@@ -156,5 +156,18 @@ def add_question_manually(tender_id: int, title: str, question_text: str, catego
 @router.get("/tenders/{tender_id}/questions", response_model=List[QuestionOut])
 def list_questions(tender_id: int):
     with db_session() as conn:
-        rows = conn.execute("SELECT * FROM questions WHERE tender_id = ? ORDER BY id", (tender_id,)).fetchall()
-    return [dict(r) for r in rows]
+        rows = conn.execute(
+            """
+            SELECT q.*, EXISTS(SELECT 1 FROM drafts d WHERE d.question_id = q.id) AS has_draft
+            FROM questions q
+            WHERE q.tender_id = ?
+            ORDER BY q.id
+            """,
+            (tender_id,),
+        ).fetchall()
+    results = []
+    for r in rows:
+        row = dict(r)
+        row["has_draft"] = bool(row["has_draft"])
+        results.append(row)
+    return results

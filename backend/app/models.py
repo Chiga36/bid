@@ -67,6 +67,7 @@ class QuestionOut(BaseModel):
     question_text: str
     category: QuestionCategory
     source_ref: Optional[str] = None
+    has_draft: bool = False
 
 
 class ElementOut(BaseModel):
