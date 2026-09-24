@@ -126,6 +126,7 @@ export default function DataIngestion() {
             description={category.description}
             files={filesByCategory[category.key] ?? []}
             onFilesChange={(files) => setFilesByCategory((prev) => ({ ...prev, [category.key]: files }))}
+            required={(MANDATORY_CATEGORY_KEYS as readonly string[]).includes(category.key)}
           />
         ))}
       </div>

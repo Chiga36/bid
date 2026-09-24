@@ -1,5 +1,5 @@
 import { apiGet, apiPost, apiUpload } from "./http";
-import type { Clarification, EvidenceChunk, Question, ScoringBand, Tender } from "./types";
+import type { Clarification, EvidenceChunk, ProcurementStage, Question, ScoringBand, Tender } from "./types";
 
 export function listTenders() {
   return apiGet<Tender[]>("/tenders");
@@ -61,4 +61,8 @@ export function uploadEvidence(tenderId: number, file: File, category: string) {
   formData.append("file", file);
   formData.append("category", category);
   return apiUpload<{ chunks_ingested: number }>(`/tenders/${tenderId}/evidence`, formData);
+}
+
+export function listProcurementStages(tenderId: number) {
+  return apiGet<ProcurementStage[]>(`/tenders/${tenderId}/procurement-stages`);
 }

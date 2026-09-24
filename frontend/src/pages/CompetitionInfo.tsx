@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 
-import { addClarification, getScoringBands, listClarifications, setScoringBands } from "../api/tenders";
-import type { BandValue, Clarification, ScoringBand } from "../api/types";
+import {
+  addClarification,
+  getScoringBands,
+  listClarifications,
+  listProcurementStages,
+  setScoringBands,
+} from "../api/tenders";
+import type { BandValue, Clarification, ProcurementStage, ScoringBand } from "../api/types";
 import { useTender } from "../context/TenderContext";
 
 const BAND_VALUES: BandValue[] = [0, 25, 50, 75, 100];
@@ -12,6 +18,7 @@ export default function CompetitionInfo() {
   const [savingBands, setSavingBands] = useState(false);
   const [clarifications, setClarifications] = useState<Clarification[]>([]);
   const [newClarification, setNewClarification] = useState("");
+  const [procurementStages, setProcurementStages] = useState<ProcurementStage[]>([]);
 
   useEffect(() => {
     if (!selectedTenderId) return;
@@ -22,6 +29,7 @@ export default function CompetitionInfo() {
       setBands(next);
     });
     listClarifications(selectedTenderId).then(setClarifications);
+    listProcurementStages(selectedTenderId).then(setProcurementStages);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTenderId]);
 
@@ -56,6 +64,28 @@ export default function CompetitionInfo() {
         <InfoField label="Contract Reference" value={selectedTender.contract_reference ?? "—"} />
         <InfoField label="Purchasing Authority" value={selectedTender.purchasing_authority ?? "—"} />
         <InfoField label="Procedure Type" value={selectedTender.procedure_type ?? "—"} />
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-white p-4">
+        <p className="text-sm font-semibold text-slate-800">Procurement timeline</p>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Extracted automatically from the competition tender instructions document uploaded under Strategy and Context —
+          stage names and dates are copied verbatim, never reworded or inferred.
+        </p>
+        {procurementStages.length === 0 ? (
+          <p className="mt-3 text-xs text-slate-400">
+            No procurement timeline extracted yet — upload the tender instructions document under Strategy and Context.
+          </p>
+        ) : (
+          <ul className="mt-3 divide-y divide-slate-100">
+            {procurementStages.map((s) => (
+              <li key={s.id} className="flex items-center justify-between gap-3 py-1.5 text-sm">
+                <span className="text-slate-700">{s.stage_name}</span>
+                <span className="shrink-0 font-medium text-slate-500">{s.stage_date}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-4">

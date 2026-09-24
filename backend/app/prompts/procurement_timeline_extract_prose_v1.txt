@@ -1,0 +1,28 @@
+You are extracting a competition's procurement timetable from a chunk of a tender instructions
+document. No table containing this timetable was found elsewhere in the document, so it may be
+written here as a bulleted list, a numbered list, or plain paragraph text instead.
+
+Document chunk:
+"""
+{document_text}
+"""
+
+Task: identify every procurement stage/milestone mentioned in this text that has an associated
+date or date phrase attached to it — e.g. "ITT issued", "Clarification questions deadline",
+"Tender submission deadline", "Evaluation period", "Contract award", "Mobilisation start",
+"Contract start date". For each one, extract:
+- stage_name: the name of the stage/milestone, copied VERBATIM, character-for-character, from
+  the text above. Do not paraphrase, summarise, or reword it.
+- stage_date: the date or date phrase associated with that stage, copied VERBATIM,
+  character-for-character, from the text above — exactly as written (e.g. "14 March 2026",
+  "Q2 2026", "Week commencing 3 March", "TBC"). Do not reformat, convert, or infer a date that
+  isn't explicitly stated.
+
+Rules:
+- Only extract a stage if it has an actual date or date phrase attached to it in the text — do
+  not extract a stage name with no date, and do not invent a date to pair with one.
+- Every stage_name and stage_date you return MUST be an exact substring of the text above. If you
+  cannot find a genuine verbatim match for either part of a stage, omit that stage rather than
+  inventing wording or a date.
+- This chunk may genuinely contain no procurement timetable content at all — if so, return an
+  empty list. Do not force an extraction.

@@ -5,11 +5,12 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: "#eef2ff",
-          100: "#e0e7ff",
-          500: "#4f46e5",
-          600: "#4338ca",
-          700: "#3730a3",
+          // KPMG Blue (#00338D), the company's well-documented public brand color.
+          50: "#e6ecf5",
+          100: "#c0d0e8",
+          500: "#00338D",
+          600: "#00296e",
+          700: "#001f54",
         },
       },
     },

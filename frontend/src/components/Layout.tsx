@@ -61,15 +61,20 @@ export default function Layout() {
           </div>
 
           {creating ? (
-            <div className="flex items-center gap-2">
-              <input
-                autoFocus
-                className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-                placeholder="Competition name"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-              />
+            <div className="flex items-end gap-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">
+                  Competition name <span className="text-rose-600">*</span>
+                </span>
+                <input
+                  autoFocus
+                  className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  placeholder="Competition name"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                />
+              </label>
               <button
                 className="rounded-md bg-brand-500 px-3 py-1 text-sm font-medium text-white hover:bg-brand-600"
                 onClick={handleCreate}

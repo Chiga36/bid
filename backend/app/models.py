@@ -181,6 +181,31 @@ class ScoringMatrixExtractionResult(BaseModel):
     bands: List[ExtractedScoringBand] = Field(default_factory=list)
 
 
+class ExtractedProcurementStage(BaseModel):
+    stage_name: str = Field(description="Verbatim name of this procurement stage/milestone, copied exactly from the source")
+    stage_date: str = Field(
+        description="Verbatim date or date phrase for this stage, copied exactly from the source (e.g. '14 March 2026', 'Q2 2026', 'TBC') — never reformatted or inferred"
+    )
+
+
+class ProcurementTimelineTableResult(BaseModel):
+    """Output of the Procurement Timeline agent's per-table LLM call — same honesty pattern as
+    ScoringMatrixExtractionResult: `is_procurement_timeline` lets the model say a table isn't the
+    timetable rather than force-extracting from it."""
+
+    is_procurement_timeline: bool
+    stages: List[ExtractedProcurementStage] = Field(default_factory=list)
+
+
+class ProcurementTimelineProseResult(BaseModel):
+    """Output of the Procurement Timeline agent's per-chunk prose fallback call, used when no
+    table in the document was classified as the procurement timetable — timetables are just as
+    often written as a bulleted list or paragraph. May legitimately be empty, same as
+    TenderRequirementExtractionResult."""
+
+    stages: List[ExtractedProcurementStage] = Field(default_factory=list)
+
+
 class ScoringPassResult(BaseModel):
     band_value: BandValue
     rationale: str

@@ -5,11 +5,14 @@ interface FileDropzoneProps {
   description: string;
   files: File[];
   onFilesChange: (files: File[]) => void;
+  required?: boolean;
 }
 
-// Every dropzone is optional by design — nothing here enforces a minimum file count. The caller
-// decides what "Execute" does with however many (including zero) files each zone holds.
-export default function FileDropzone({ title, description, files, onFilesChange }: FileDropzoneProps) {
+// Most dropzones are optional by design — nothing here enforces a minimum file count on them. A
+// `required` zone (see DataIngestion.tsx's MANDATORY_CATEGORY_KEYS) is still just a dropzone —
+// the caller enforces the actual gating (disabling "Execute") — this component only communicates
+// which ones matter via the red asterisk and hint text below.
+export default function FileDropzone({ title, description, files, onFilesChange, required = false }: FileDropzoneProps) {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -30,7 +33,10 @@ export default function FileDropzone({ title, description, files, onFilesChange 
 
   return (
     <div className="flex flex-col rounded-lg border border-slate-200 bg-white p-4">
-      <p className="text-sm font-semibold text-slate-800">{title}</p>
+      <p className="text-sm font-semibold text-slate-800">
+        {title}
+        {required && <span className="ml-0.5 text-rose-600">*</span>}
+      </p>
       <p className="mt-0.5 text-xs text-slate-500">{description}</p>
 
       <div
@@ -48,7 +54,7 @@ export default function FileDropzone({ title, description, files, onFilesChange 
         tabIndex={0}
       >
         <p className="text-sm text-slate-500">Drag &amp; drop files here</p>
-        <p className="text-xs text-slate-400">or click to browse — optional</p>
+        <p className="text-xs text-slate-400">or click to browse{required ? "" : " — optional"}</p>
         <input
           ref={inputRef}
           type="file"

@@ -10,6 +10,7 @@ from fastapi import APIRouter, Form, HTTPException, UploadFile
 
 from app import vector_store
 from app.agents.methodology import extract_methodology
+from app.agents.procurement_timeline import extract_procurement_stages
 from app.agents.scoring_matrix import extract_scoring_bands
 from app.agents.tender_requirements import extract_requirements
 from app.config import settings
@@ -52,6 +53,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
     methodology_extracted = False
     requirements_extracted = 0
     scoring_bands_extracted = 0
+    procurement_stages_extracted = 0
     if category == _METHODOLOGY_CATEGORY:
         # Best-effort: a failure here (including missing Azure credentials) must never break
         # evidence upload, which otherwise works with no Azure configuration at all since
@@ -102,6 +104,20 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
         except Exception:
             pass
 
+        try:
+            stages = extract_procurement_stages(parsed.tables, parsed.full_text)
+            if stages:
+                with db_session() as conn:
+                    for stage in stages:
+                        conn.execute(
+                            "INSERT INTO procurement_stages (tender_id, source_document, stage_name, stage_date) "
+                            "VALUES (?, ?, ?, ?)",
+                            (tender_id, file.filename, stage.stage_name, stage.stage_date),
+                        )
+                procurement_stages_extracted = len(stages)
+        except Exception:
+            pass
+
     return {
         "tender_id": tender_id,
         "source_document": file.filename,
@@ -110,6 +126,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
         "methodology_extracted": methodology_extracted,
         "requirements_extracted": requirements_extracted,
         "scoring_bands_extracted": scoring_bands_extracted,
+        "procurement_stages_extracted": procurement_stages_extracted,
     }
 
 
@@ -118,6 +135,20 @@ def list_evidence(tender_id: int) -> List[dict]:
     with db_session() as conn:
         rows = conn.execute(
             "SELECT id, source_document, category, chunk_text, created_at FROM evidence_chunks WHERE tender_id = ? ORDER BY id",
+            (tender_id,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+@router.get("/tenders/{tender_id}/procurement-stages")
+def list_procurement_stages(tender_id: int) -> List[dict]:
+    """Raw rows, in extraction order — unlike Tender Requirements (only ever consumed via Chroma
+    retrieval), this is displayed as-is in Competition Info, so it needs its own listing
+    endpoint rather than just a vector_store query function."""
+    with db_session() as conn:
+        rows = conn.execute(
+            "SELECT id, source_document, stage_name, stage_date, created_at FROM procurement_stages "
+            "WHERE tender_id = ? ORDER BY id",
             (tender_id,),
         ).fetchall()
     return [dict(r) for r in rows]

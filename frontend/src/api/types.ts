@@ -101,6 +101,14 @@ export interface Clarification {
   created_at: string;
 }
 
+export interface ProcurementStage {
+  id: number;
+  source_document: string;
+  stage_name: string;
+  stage_date: string;
+  created_at: string;
+}
+
 export interface EvidenceChunk {
   id: number;
   source_document: string;

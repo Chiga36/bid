@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
@@ -8,13 +9,35 @@ const NAV_ITEMS = [
   { to: "/skills", label: "Agent Skills" },
 ];
 
+// Renders /kpmg-logo.png (frontend/public/kpmg-logo.png — anything under public/ is served at
+// the site root by Vite, no import/bundling step needed). Falls back to a plain "B" mark if the
+// file is ever missing, so nothing looks broken. The real logo is a wide mark (~2.6:1), so the
+// collapsed 56px rail constrains by max-width rather than a fixed height — a fixed h-7 would
+// render it wider than the rail itself and spill out.
+function KpmgLogo({ collapsed }: { collapsed: boolean }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-500 text-sm font-semibold text-white">
+        B
+      </span>
+    );
+  }
+  return (
+    <img
+      src="/kpmg-logo.png"
+      alt="KPMG"
+      className={collapsed ? "h-auto max-w-[36px] object-contain" : "h-7 w-auto object-contain"}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   if (collapsed) {
     return (
       <aside className="flex w-14 shrink-0 flex-col items-center border-r border-slate-200 bg-white py-4">
-        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-500 text-sm font-semibold text-white">
-          B
-        </span>
+        <KpmgLogo collapsed />
         <button
           onClick={onToggle}
           title="Expand sidebar"
@@ -31,9 +54,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
     <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-5 py-4">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-500 text-sm font-semibold text-white">
-            B
-          </span>
+          <KpmgLogo collapsed={false} />
           <span className="text-sm font-semibold text-slate-900">Bid Co-author</span>
         </div>
         <button

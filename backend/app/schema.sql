@@ -214,6 +214,19 @@ CREATE TABLE IF NOT EXISTS tender_requirements (
     created_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Procurement timetable extracted from a Strategy and Context upload (see
+-- app/agents/procurement_timeline.py) — stage_date stays free text, never parsed into a real
+-- date, since source documents state dates with wildly varying precision ("14 March 2026",
+-- "Q2 2026", "TBC").
+CREATE TABLE IF NOT EXISTS procurement_stages (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    tender_id       INTEGER NOT NULL REFERENCES tenders(id),
+    source_document TEXT NOT NULL,
+    stage_name      TEXT NOT NULL,
+    stage_date      TEXT NOT NULL,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Theme Review agent output (see app/agents/theme_review.py) — the seven-prompt expert critique
 -- from the Bid Response Review Skills toolkit. List/object fields are JSON-encoded text; a POC
 -- with a handful of short lists per row doesn't need child tables for this.

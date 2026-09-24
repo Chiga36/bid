@@ -1,0 +1,29 @@
+You are checking whether one table, extracted from a competition tender instructions document, is
+that tender's procurement timetable — the schedule of key stages/milestones and their dates.
+
+Table content (rows, cells separated by " | "):
+"""
+{table_text}
+"""
+
+Task 1 — Is this the procurement timetable?
+A genuine procurement timetable lists the stages of the competition process (e.g. "ITT issued",
+"Clarification questions deadline", "Tender submission deadline", "Evaluation period",
+"Contract award", "Mobilisation start", "Contract start date") each paired with a date or date
+phrase. If this table is something else entirely (a scoring matrix, a contents page, a contacts
+list, a requirements list with no dates, etc.), set is_procurement_timeline to false and return an
+empty stages list — do not force an extraction from a table that isn't actually a timetable.
+
+Task 2 — If it IS the procurement timetable, extract each stage:
+- stage_name: the name of the stage/milestone, copied VERBATIM, character-for-character, from
+  the table above. Do not paraphrase, summarise, or reword it.
+- stage_date: the date or date phrase associated with that stage, copied VERBATIM,
+  character-for-character, from the table above — exactly as written (e.g. "14 March 2026",
+  "Q2 2026", "Week commencing 3 March", "TBC"). Do not reformat, convert, or infer a date that
+  isn't explicitly stated.
+
+Rules:
+- Every stage_name and stage_date you return MUST be an exact substring of the table content
+  above. If you cannot find a genuine verbatim match for either part of a stage, omit that stage
+  rather than inventing wording or a date.
+- Do not include commentary, headings, or anything not present in the table.
