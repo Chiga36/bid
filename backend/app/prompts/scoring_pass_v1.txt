@@ -11,5 +11,11 @@ Draft text:
 """
 
 Task: decide which single band value best matches the draft, based only on the band descriptors
-above and the draft text. Give a short rationale explaining which parts of the draft support that
-band, and what would need to change to reach the next band up.
+above and the draft text. Give a detailed, elaborate rationale (several sentences, not a one-liner)
+that:
+- Quotes or closely references the specific parts of the draft that support this band.
+- Goes through the chosen band's descriptor and states, point by point, which parts of it the
+  draft actually satisfies and which parts it only partially satisfies or doesn't address at all.
+- Explains concretely and specifically what would need to change or be added in the draft to
+  reach the next band up — not generic advice, but what's actually missing given this exact
+  draft and this exact descriptor.

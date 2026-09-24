@@ -166,6 +166,21 @@ class MethodologyExtraction(BaseModel):
     )
 
 
+class ExtractedScoringBand(BaseModel):
+    band_value: BandValue
+    descriptor_text: str = Field(description="Verbatim descriptor text for this band, copied exactly from the table")
+
+
+class ScoringMatrixExtractionResult(BaseModel):
+    """Output of the Scoring Matrix agent's per-table LLM call. `is_scoring_matrix` lets the
+    model honestly say a table isn't the tender's scoring matrix rather than force-extracting
+    something from it — the agent only trusts `bands` when this is true, and even then only
+    after verifying each descriptor_text is a genuine substring of the source table."""
+
+    is_scoring_matrix: bool
+    bands: List[ExtractedScoringBand] = Field(default_factory=list)
+
+
 class ScoringPassResult(BaseModel):
     band_value: BandValue
     rationale: str

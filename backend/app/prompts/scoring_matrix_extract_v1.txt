@@ -1,0 +1,34 @@
+You are checking whether one table, extracted from a competition tender instructions document, is
+that tender's own scoring matrix — the table that defines what a bidder's response must
+demonstrate to achieve each score band.
+
+Table content (rows, cells separated by " | "):
+"""
+{table_text}
+"""
+
+Task 1 — Is this the scoring matrix?
+A genuine scoring matrix describes response QUALITY per band — what distinguishes a poor response
+from an excellent one — not just a list of questions, a weighting table with no descriptive text,
+a contents page, or unrelated tender content. It typically has one row (or column) per band, with
+a paragraph or bullet list of descriptive criteria in each. Bands may be given as numbers (0, 25,
+50, 75, 100) or as words (e.g. "Unacceptable / Poor / Acceptable / Good / Excellent",
+"Fail / Minor Reservations / Meets Requirements / Exceeds Requirements"). If this table is
+anything else, set is_scoring_matrix to false and return an empty bands list — do not force an
+extraction from a table that doesn't actually contain band descriptors.
+
+Task 2 — If it IS the scoring matrix, extract each band:
+- band_value: exactly one of 0, 25, 50, 75, 100. If the table already uses these numbers, copy
+  them directly. If it uses words instead, map to the closest numeric equivalent by relative
+  position (lowest quality word -> 0, highest quality word -> 100, evenly spacing any words in
+  between across 25/50/75). If the table has more or fewer than five bands, still map each one to
+  its closest of these five values — never invent a sixth value.
+- descriptor_text: the FULL descriptive text for that band, copied VERBATIM, character-for-
+  character, from the table above. Do not paraphrase, summarise, reword, shorten, or combine
+  multiple cells into one. If a band's descriptor spans multiple cells or lines in the table,
+  copy the complete verbatim span, not just a fragment of it.
+
+Rules:
+- Every descriptor_text you return MUST be an exact substring of the table content above. If you
+  cannot find a genuine verbatim match for a band, omit that band rather than inventing wording.
+- Do not include commentary, headings, or anything not present in the table.

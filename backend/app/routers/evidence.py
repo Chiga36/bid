@@ -10,6 +10,7 @@ from fastapi import APIRouter, Form, HTTPException, UploadFile
 
 from app import vector_store
 from app.agents.methodology import extract_methodology
+from app.agents.scoring_matrix import extract_scoring_bands
 from app.agents.tender_requirements import extract_requirements
 from app.config import settings
 from app.db import db_session
@@ -50,6 +51,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
 
     methodology_extracted = False
     requirements_extracted = 0
+    scoring_bands_extracted = 0
     if category == _METHODOLOGY_CATEGORY:
         # Best-effort: a failure here (including missing Azure credentials) must never break
         # evidence upload, which otherwise works with no Azure configuration at all since
@@ -83,6 +85,23 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
         except Exception:
             pass
 
+        try:
+            bands = extract_scoring_bands(parsed.tables)
+            if bands:
+                with db_session() as conn:
+                    # Same replace semantics as the manual POST /tenders/{id}/scoring-bands
+                    # endpoint (routers/tenders.py) — a later corrected re-upload supersedes the
+                    # old bands, whether they were set by hand or by extraction.
+                    conn.execute("DELETE FROM scoring_bands WHERE tender_id = ?", (tender_id,))
+                    for band in bands:
+                        conn.execute(
+                            "INSERT INTO scoring_bands (tender_id, band_value, descriptor_text) VALUES (?, ?, ?)",
+                            (tender_id, band.band_value, band.descriptor_text),
+                        )
+                scoring_bands_extracted = len(bands)
+        except Exception:
+            pass
+
     return {
         "tender_id": tender_id,
         "source_document": file.filename,
@@ -90,6 +109,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
         "chunks_ingested": len(chunk_texts),
         "methodology_extracted": methodology_extracted,
         "requirements_extracted": requirements_extracted,
+        "scoring_bands_extracted": scoring_bands_extracted,
     }
 
 

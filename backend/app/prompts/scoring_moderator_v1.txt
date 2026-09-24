@@ -16,5 +16,10 @@ The three independent passes returned:
 3. Band {pass_3_band} — {pass_3_rationale}
 
 Task: read all three rationales against the draft and the band descriptors, decide which band is
-actually best supported by the evidence in the draft, and explain briefly why the other pass(es)
-were too high or too low.
+actually best supported by the evidence in the draft, and give a detailed, elaborate rationale
+(several sentences, not a one-liner) that:
+- States clearly which band you reconciled to and why, quoting or closely referencing the
+  specific parts of the draft that justify it.
+- Explains specifically why each of the other pass(es) that disagreed were too high or too low —
+  what they overweighted or missed relative to the actual band descriptors.
+- States concretely what would need to change or be added in the draft to reach the next band up.

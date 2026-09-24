@@ -19,6 +19,7 @@ import type {
   GateResult,
   Question,
   RecommendationItem,
+  ScoringRun,
   ScoringSummary,
   ThemeReview,
 } from "../api/types";
@@ -306,10 +307,9 @@ export default function ResponseBuilder() {
         <CoachAction label="Suggest indicative score" busy={busyAction === "score"} disabled={coachDisabled} onClick={handleScore} />
         {scoring && (
           <div className="rounded-md border border-slate-200 p-2 text-xs">
-            <p className="font-semibold text-slate-800">
-              Band {scoring.final_band} <StatusPill status={scoring.confidence} />
-            </p>
+            <p className="font-semibold text-slate-800">Band {scoring.final_band}</p>
             {scoring.used_moderator && <p className="mt-1 text-slate-500">Moderator pass was used (passes disagreed).</p>}
+            <ScoringRationale runs={scoring.runs} usedModerator={scoring.used_moderator} />
           </div>
         )}
 
@@ -444,6 +444,49 @@ function ThemeReviewPanel({ review, subQuestions }: { review: ThemeReview; subQu
         <p className="font-semibold text-slate-700">Improved answer plan</p>
         <p className="mt-1 text-slate-600">{review.improved_answer_plan}</p>
       </div>
+    </div>
+  );
+}
+
+function ScoringRationale({ runs, usedModerator }: { runs: ScoringRun[]; usedModerator: boolean }) {
+  const moderatorRun = runs.find((r) => r.pass_number === "moderator");
+  const passRuns = runs.filter((r) => r.pass_number !== "moderator");
+
+  if (usedModerator && moderatorRun?.rationale) {
+    return (
+      <div className="mt-2 flex flex-col gap-2">
+        <div>
+          <p className="font-semibold text-slate-700">Why this score</p>
+          <p className="mt-0.5 text-slate-600">{moderatorRun.rationale}</p>
+        </div>
+        {passRuns.length > 0 && (
+          <div>
+            <p className="font-semibold text-slate-700">Individual assessments</p>
+            <div className="mt-1 flex flex-col gap-1.5">
+              {passRuns.map((r) => (
+                <p key={r.pass_number} className="text-slate-600">
+                  <span className="font-medium text-slate-500">
+                    Assessment {r.pass_number} (Band {r.band_value}):{" "}
+                  </span>
+                  {r.rationale}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2 flex flex-col gap-1.5">
+      <p className="font-semibold text-slate-700">Why this score</p>
+      {passRuns.map((r) => (
+        <p key={r.pass_number} className="text-slate-600">
+          <span className="font-medium text-slate-500">Assessment {r.pass_number}: </span>
+          {r.rationale}
+        </p>
+      ))}
     </div>
   );
 }
