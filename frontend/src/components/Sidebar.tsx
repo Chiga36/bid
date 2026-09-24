@@ -4,6 +4,16 @@ import { NavLink } from "react-router-dom";
 // Plain inline SVGs (24x24, stroke-based), no icon library — consistent with the rest of this
 // app's zero-dependency style. One per nav destination, shown alone in the collapsed rail and
 // alongside the label when expanded.
+function HomeIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M4 11.5 12 4l8 7.5" />
+      <path d="M6 10v9a1 1 0 001 1h10a1 1 0 001-1v-9" />
+      <path d="M10 20v-5h4v5" />
+    </svg>
+  );
+}
+
 function ResponseBuilderIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -57,6 +67,7 @@ function AgentOverviewIcon({ className }: { className?: string }) {
 }
 
 const NAV_ITEMS = [
+  { to: "/", label: "Home", Icon: HomeIcon, end: true },
   { to: "/builder", label: "Response Builder", Icon: ResponseBuilderIcon },
   { to: "/ingestion", label: "Data Ingestion", Icon: DataIngestionIcon },
   { to: "/status", label: "Status Report", Icon: StatusReportIcon },
@@ -144,10 +155,11 @@ export default function Sidebar() {
         )}
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-          {NAV_ITEMS.map(({ to, label, Icon }) => (
+          {NAV_ITEMS.map(({ to, label, Icon, end }) => (
             <NavLink
               key={to}
               to={to}
+              end={end}
               title={label}
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
