@@ -5,6 +5,7 @@ import AgentOverview from "./pages/AgentOverview";
 import CompetitionInfo from "./pages/CompetitionInfo";
 import DataIngestion from "./pages/DataIngestion";
 import Home from "./pages/Home";
+import KYC from "./pages/KYC";
 import ResponseBuilder from "./pages/ResponseBuilder";
 import StatusReport from "./pages/StatusReport";
 
@@ -15,6 +16,7 @@ export default function App() {
         <Route index element={<Home />} />
         <Route path="/builder" element={<ResponseBuilder />} />
         <Route path="/ingestion" element={<DataIngestion />} />
+        <Route path="/kyc" element={<KYC />} />
         <Route path="/status" element={<StatusReport />} />
         <Route path="/info" element={<CompetitionInfo />} />
         <Route path="/skills" element={<AgentOverview />} />

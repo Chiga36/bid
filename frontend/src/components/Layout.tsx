@@ -10,8 +10,8 @@ function initials(name: string): string {
   return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-// The account selector/creator that used to live here was a duplicate of what the Home page's
-// own Accounts section already does — switching or creating an account now happens there.
+// The Tender selector/creator that used to live here was a duplicate of what the Home page's
+// own Tenders section already does — switching or creating an Tender now happens there.
 // This is just a lightweight "you are here" indicator + a way back to that section.
 function AccountBadge() {
   const { selectedTender } = useTender();

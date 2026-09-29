@@ -174,9 +174,17 @@ export default function ResponseBuilder() {
     await withBusy("checks", async () => setChecks(await runDeterministicChecks(selectedDraftId)));
   }
 
-  async function handleScore() {
+  async function handleExpertReview() {
     if (!selectedDraftId) return;
-    await withBusy("score", async () => setScoring(await runScoring(selectedDraftId)));
+    // Indicative Score and Theme Review used to be two separate coach actions with two separate
+    // result blocks — too much for a bid writer to read as unrelated outputs when they're really
+    // two views of the same judgement on the same draft. Run both and render them as one panel
+    // (see the merged block below): the band up front, then the full expert critique.
+    await withBusy("expert-review", async () => {
+      const [scoreResult, reviewResult] = await Promise.all([runScoring(selectedDraftId), runThemeReview(selectedDraftId)]);
+      setScoring(scoreResult);
+      setThemeReview(reviewResult);
+    });
   }
 
   async function handleRecommend() {
@@ -187,11 +195,6 @@ export default function ResponseBuilder() {
   async function handleGate() {
     if (!selectedDraftId) return;
     await withBusy("gate", async () => setGate(await getGate(selectedDraftId)));
-  }
-
-  async function handleThemeReview() {
-    if (!selectedDraftId) return;
-    await withBusy("theme-review", async () => setThemeReview(await runThemeReview(selectedDraftId)));
   }
 
   const coachDisabled = !selectedDraftId || hasUnsavedChanges;
@@ -247,9 +250,14 @@ export default function ResponseBuilder() {
               <button
                 onClick={handleDecompose}
                 disabled={busyAction === "decompose"}
-                className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {elements.length === 0 ? "Decompose question" : "Re-decompose (unlocked elements only)"}
+                {busyAction === "decompose" && <Spinner />}
+                {busyAction === "decompose"
+                  ? "Decomposing..."
+                  : elements.length === 0
+                  ? "Decompose question"
+                  : "Re-decompose (unlocked elements only)"}
               </button>
               <button
                 onClick={handleLock}
@@ -378,15 +386,6 @@ export default function ResponseBuilder() {
           </div>
         )}
 
-        <CoachAction label="Suggest indicative score" busy={busyAction === "score"} disabled={coachDisabled} onClick={handleScore} />
-        {scoring && (
-          <div className="rounded-md border border-slate-200 p-2 text-xs">
-            <p className="font-semibold text-slate-800">Band {scoring.final_band}</p>
-            {scoring.used_moderator && <p className="mt-1 text-slate-500">Moderator pass was used (passes disagreed).</p>}
-            <ScoringRationale runs={scoring.runs} usedModerator={scoring.used_moderator} />
-          </div>
-        )}
-
         <CoachAction label="Suggest fixes" busy={busyAction === "recommend"} disabled={coachDisabled} onClick={handleRecommend} />
         {recommendations && recommendations.length === 0 && <p className="text-xs text-slate-400">Nothing to fix.</p>}
         {recommendations && recommendations.length > 0 && (
@@ -410,23 +409,44 @@ export default function ResponseBuilder() {
         )}
 
         <CoachAction
-          label="Expert theme review"
-          busy={busyAction === "theme-review"}
+          label="Expert review & score"
+          busy={busyAction === "expert-review"}
           disabled={coachDisabled}
-          onClick={handleThemeReview}
+          onClick={handleExpertReview}
         />
-        {themeReview && <ThemeReviewPanel review={themeReview} subQuestions={subQuestionElements.map((e) => e.value_text)} />}
+        {themeReview && (
+          <ThemeReviewPanel
+            review={themeReview}
+            scoring={scoring}
+            subQuestions={subQuestionElements.map((e) => e.value_text)}
+          />
+        )}
       </div>
     </div>
   );
 }
 
-function ThemeReviewPanel({ review, subQuestions }: { review: ThemeReview; subQuestions: string[] }) {
+function ThemeReviewPanel({
+  review,
+  scoring,
+  subQuestions,
+}: {
+  review: ThemeReview;
+  scoring: ScoringSummary | null;
+  subQuestions: string[];
+}) {
   return (
     <div className="flex flex-col gap-3 rounded-md border border-slate-200 p-3 text-xs">
-      <div>
-        <p className="font-semibold text-slate-800">{review.theme}</p>
-        <p className="mt-0.5 text-slate-500">{review.theme_fit}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="font-semibold text-slate-800">{review.theme}</p>
+          <p className="mt-0.5 text-slate-500">{review.theme_fit}</p>
+        </div>
+        {scoring && (
+          <span className="shrink-0 rounded-full bg-brand-50 px-2 py-1 text-center text-xs font-semibold text-brand-700">
+            Band {scoring.final_band}
+          </span>
+        )}
       </div>
 
       <p className="text-slate-600">{review.evaluator_summary}</p>
@@ -438,6 +458,13 @@ function ThemeReviewPanel({ review, subQuestions }: { review: ThemeReview; subQu
         <ScoreRow label="Client specificity" value={review.score_client_specificity} />
         <ScoreRow label="Evaluator confidence" value={review.score_evaluator_confidence} />
       </div>
+
+      {scoring && (
+        <div className="rounded-md border border-slate-100 p-2">
+          {scoring.used_moderator && <p className="text-slate-500">Moderator pass was used (passes disagreed).</p>}
+          <ScoringRationale runs={scoring.runs} usedModerator={scoring.used_moderator} />
+        </div>
+      )}
 
       {review.strengths.length > 0 && (
         <div>
@@ -637,10 +664,20 @@ function CoachAction({
     <button
       onClick={onClick}
       disabled={busy || disabled}
-      className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+      className="flex w-full items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
     >
+      {busy && <Spinner />}
       {busy ? "Running..." : label}
     </button>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg className="h-3 w-3 shrink-0 animate-spin text-slate-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+    </svg>
   );
 }
 

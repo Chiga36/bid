@@ -111,6 +111,15 @@ export interface ProcurementStage {
   created_at: string;
 }
 
+export interface KYCInsight {
+  id: number;
+  tender_id: number;
+  source_document: string;
+  client_summary: string | null;
+  key_facts: string[];
+  considerations: string[];
+}
+
 export interface EvidenceChunk {
   id: number;
   source_document: string;

@@ -39,9 +39,13 @@ def _serialize_table(table: RawTable) -> str:
 
 
 def _looks_like_timetable(serialized: str) -> bool:
-    """Cheap deterministic pre-filter, no LLM call — same permissive philosophy as
-    scoring_matrix._looks_like_scoring_matrix: any one signal is enough to warrant asking the
-    model, since a false positive only costs one extra call."""
+    """Ordering hint only — NOT a gate. A real tender can title this table anything at all
+    ("Important Dates", "Programme", "Indicative Dates", "Submission Deadlines"...); no fixed
+    word list could ever anticipate every real heading, and using this as a hard pre-filter
+    previously meant a genuine timetable with an unrecognised heading was silently skipped
+    without ever reaching the model — real data loss, not just a missed optimisation. Every
+    size-eligible table is still checked by the model regardless of this signal (see
+    _extract_from_tables); this only decides which gets checked first."""
     return any(word in serialized.lower() for word in _SIGNAL_WORDS)
 
 
@@ -64,12 +68,14 @@ def _extract_from_table(table: RawTable, tender_id: Optional[int] = None) -> Lis
 
 
 def _extract_from_tables(tables: List[RawTable], tender_id: Optional[int] = None) -> List[ExtractedStage]:
-    for table in tables:
-        if not table.rows or len(table.rows) > _MAX_TABLE_ROWS:
-            continue
-        serialized = _serialize_table(table)
-        if not _looks_like_timetable(serialized):
-            continue
+    # Only the row-count cap is a real gate (a purely structural, vocabulary-independent guard
+    # against burning a call on some huge unrelated table). Every table within it is checked by
+    # the model — _looks_like_timetable no longer gets veto power, it only decides check order,
+    # so a genuine timetable titled something this word list never anticipated still gets found.
+    candidates = [t for t in tables if t.rows and len(t.rows) <= _MAX_TABLE_ROWS]
+    likely = [t for t in candidates if _looks_like_timetable(_serialize_table(t))]
+    unlikely = [t for t in candidates if t not in likely]
+    for table in likely + unlikely:
         stages = _extract_from_table(table, tender_id)
         if stages:
             return stages

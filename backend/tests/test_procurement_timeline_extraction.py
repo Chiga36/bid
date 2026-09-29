@@ -84,6 +84,27 @@ def test_extract_procurement_stages_falls_back_to_prose_when_no_table_matches(mo
     assert result[0].stage_name == "ITT issued"
 
 
+def test_extract_from_tables_checks_a_table_even_with_no_signal_words(monkeypatch):
+    """Regression test: a genuine timetable titled with vocabulary _SIGNAL_WORDS never
+    anticipated (e.g. "Important Dates" rather than "Timetable"/"Milestones"/"Schedule") must
+    still reach the model instead of being silently skipped by the heading-based pre-filter."""
+
+    def fake_call_structured(**kwargs):
+        return ProcurementTimelineTableResult(
+            is_procurement_timeline=True,
+            stages=[ExtractedProcurementStage(stage_name="Deadline for questions", stage_date="10 May 2026")],
+        )
+
+    monkeypatch.setattr(procurement_timeline.llm_client, "call_structured", fake_call_structured)
+
+    table = RawTable(rows=[["Important Dates", "When"], ["Deadline for questions", "10 May 2026"]])
+    assert not procurement_timeline._looks_like_timetable(procurement_timeline._serialize_table(table))
+
+    result = procurement_timeline._extract_from_tables([table])
+    assert len(result) == 1
+    assert result[0].stage_name == "Deadline for questions"
+
+
 def test_extract_procurement_stages_prefers_table_result_over_prose(monkeypatch):
     monkeypatch.setattr(
         procurement_timeline,

@@ -11,8 +11,8 @@ export default function Home() {
   const navigate = useNavigate();
 
   async function handleCreated(id: number) {
-    // New account -> straight to Data Ingestion, not Response Builder: there's nothing to draft
-    // yet, and this is the natural next step for a first-time user. Existing accounts (below)
+    // New Tender -> straight to Data Ingestion, not Response Builder: there's nothing to draft
+    // yet, and this is the natural next step for a first-time user. Existing Tenders (below)
     // skip straight to Response Builder since they've presumably already been ingested.
     await refreshTenders();
     selectTender(id);
@@ -55,7 +55,7 @@ export default function Home() {
       <div className="relative flex flex-col gap-12 px-10 py-12">
         <div className="flex flex-col gap-4">
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-            <span aria-hidden>✦</span> LLM-Powered Bid Assistant
+            <span aria-hidden>✦</span> AI-Powered Bid Assistant
           </span>
 
           <h1 className="text-5xl font-bold tracking-tight text-white">
@@ -70,7 +70,7 @@ export default function Home() {
         </div>
 
         <div>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-blue-100">Accounts</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-blue-100">Tenders</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <NewAccountTile onCreated={handleCreated} />
             {tenders.map((t) => (
@@ -99,7 +99,7 @@ function AccountTile({ tender, onClick }: { tender: Tender; onClick: () => void 
 }
 
 // This tile IS the account-creation entry point on Home — a persistent first tile in the grid
-// (present whether zero or many accounts exist), not a separate empty-state layout. Styled as a
+// (present whether zero or many Tenders exist), not a separate empty-state layout. Styled as a
 // solid light card (matching the reference's "New Project" tile) so it reads as the clear primary
 // action against the dark, animated surroundings.
 function NewAccountTile({ onCreated }: { onCreated: (id: number) => void }) {
@@ -119,7 +119,7 @@ function NewAccountTile({ onCreated }: { onCreated: (id: number) => void }) {
       className="flex flex-col justify-center gap-2 rounded-xl bg-white p-4 text-left shadow-lg transition-transform hover:-translate-y-0.5"
     >
       <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-lg leading-none text-white">+</span>
-      <span className="mt-1 text-sm font-semibold text-slate-800">New Account</span>
+      <span className="mt-1 text-sm font-semibold text-slate-800">New Tender</span>
       <span className="text-xs text-slate-400">Start fresh</span>
     </button>
   );

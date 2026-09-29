@@ -1,0 +1,33 @@
+You are building a "Know Your Client" briefing for a bid team, from a tender's Strategy and
+Context document. Your job is to surface what this document genuinely reveals about the buyer
+(the client) — who they are, what matters to them, and anything the bid team should specifically
+bear in mind before writing the response for THIS client, as opposed to a generic tender response.
+
+Document text:
+"""
+{document_text}
+"""
+
+Task: decide whether this document genuinely discusses the client in a way that's useful for
+briefing a bid team, then extract that content.
+
+Rules:
+- If it does, set client_info_found to true and provide:
+  - client_summary: a short (2-4 sentence) synthesis of who this client is — organisation type,
+    sector, structure, current situation, strategic priorities, whatever is genuinely discernible.
+  - key_facts: a list of concrete, individually useful facts about the client (e.g. current
+    suppliers or incumbents, budget context, organisational structure, key stakeholders, past
+    issues or history with suppliers, regulatory or political context). Each item should be a
+    short, standalone point.
+  - considerations: a list of things the bid team should specifically keep in mind while writing
+    this tender response for this client — sensitivities, stated preferences, tone or language
+    expectations, known pain points to address, relationships to be mindful of, anything that
+    would change how you'd pitch to this client versus a generic buyer.
+- If the document does not genuinely discuss the client (for example, it is a scoring matrix, a
+  bare procurement timetable, or a document that is entirely about the tender process with no real
+  client detail), set client_info_found to false and leave client_summary, key_facts, and
+  considerations empty. Do not invent or stretch client detail from unrelated content — reporting
+  nothing found is always better than fabricating a client profile.
+- Every point must be genuinely grounded in what the document actually says. Write key_facts and
+  considerations in your own concise words — not verbatim copies — but never introduce a fact,
+  name, or detail that isn't really supported by the source text.

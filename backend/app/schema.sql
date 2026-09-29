@@ -241,6 +241,19 @@ CREATE TABLE IF NOT EXISTS procurement_stages (
     created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Know Your Client agent output (see app/agents/kyc.py) — synthesis, not verbatim extraction, so
+-- key_facts/considerations are JSON-encoded lists of the model's own summarised points, same
+-- convention as theme_reviews below.
+CREATE TABLE IF NOT EXISTS kyc_insights (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    tender_id       INTEGER NOT NULL REFERENCES tenders(id),
+    source_document TEXT NOT NULL,
+    client_summary  TEXT,
+    key_facts       TEXT NOT NULL,  -- JSON array of strings
+    considerations  TEXT NOT NULL,  -- JSON array of strings
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Theme Review agent output (see app/agents/theme_review.py) — the seven-prompt expert critique
 -- from the Bid Response Review Skills toolkit. List/object fields are JSON-encoded text; a POC
 -- with a handful of short lists per row doesn't need child tables for this.

@@ -79,6 +79,13 @@ const AGENTS: AgentInfo[] = [
     ],
   },
   {
+    name: "Know Your Client",
+    what: "Summarises who the client is and what to keep in mind before writing for them.",
+    how: "Reads the Strategy and Context upload, honestly reporting nothing if no real client detail is genuinely discussed.",
+    expected: "The tender instructions document uploaded under Strategy and Context.",
+    promptFiles: [{ label: "Know Your Client", filename: "kyc_extract_v1.txt" }],
+  },
+  {
     name: "Methodology",
     what: "Summarises how this client actually evaluates responses.",
     how: "Reads the Strategy and Context upload, honestly reporting nothing if no methodology is genuinely discussed.",

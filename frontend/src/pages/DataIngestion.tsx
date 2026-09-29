@@ -73,14 +73,14 @@ export default function DataIngestion() {
   const [resultLog, setResultLog] = useState<string[]>([]);
   const [redirecting, setRedirecting] = useState(false);
 
-  // Once ingestion has actually processed something, move the user on to Response Builder
-  // automatically after a moment — there's nothing more to do on this page, and for a
-  // first-time user this is the natural next step. A few seconds' delay (rather than instant)
-  // keeps the result log below on screen long enough to actually read; "Continue now" skips
-  // the wait for anyone who doesn't want it.
+  // Once ingestion has actually processed something, move the user on to Know Your Client
+  // automatically after a moment — the new workflow is Data Ingestion -> KYC -> Response
+  // Builder, so KYC (not Response Builder) is the natural next step for a first-time user. A
+  // few seconds' delay (rather than instant) keeps the result log below on screen long enough
+  // to actually read; "Continue now" skips the wait for anyone who doesn't want it.
   useEffect(() => {
     if (!redirecting) return;
-    const timer = setTimeout(() => navigate("/builder"), 2500);
+    const timer = setTimeout(() => navigate("/kyc"), 2500);
     return () => clearTimeout(timer);
   }, [redirecting, navigate]);
 
@@ -270,9 +270,9 @@ export default function DataIngestion() {
 
               {redirecting && (
                 <div className="flex items-center justify-between rounded-lg border border-brand-200 bg-brand-50 px-4 py-3">
-                  <span className="text-sm text-brand-700">Taking you to Response Builder...</span>
+                  <span className="text-sm text-brand-700">Taking you to Know Your Client...</span>
                   <button
-                    onClick={() => navigate("/builder")}
+                    onClick={() => navigate("/kyc")}
                     className="rounded-md bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600"
                   >
                     Continue now →

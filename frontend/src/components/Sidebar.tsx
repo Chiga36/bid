@@ -34,6 +34,16 @@ function DataIngestionIcon({ className }: { className?: string }) {
   );
 }
 
+function KycIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3.5 20v-1a5.5 5.5 0 0111 0v1" />
+      <path d="M15.5 6.5l1.5 1.5 3-3" />
+    </svg>
+  );
+}
+
 function StatusReportIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -70,6 +80,7 @@ const NAV_ITEMS = [
   { to: "/", label: "Home", Icon: HomeIcon, end: true },
   { to: "/builder", label: "Response Builder", Icon: ResponseBuilderIcon },
   { to: "/ingestion", label: "Data Ingestion", Icon: DataIngestionIcon },
+  { to: "/kyc", label: "Know Your Client", Icon: KycIcon },
   { to: "/status", label: "Status Report", Icon: StatusReportIcon },
   { to: "/info", label: "Competition Info", Icon: CompetitionInfoIcon },
   { to: "/skills", label: "Agent Overview", Icon: AgentOverviewIcon },

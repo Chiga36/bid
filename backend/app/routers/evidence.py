@@ -2,6 +2,7 @@
 study/CV/credential document with app/document_extraction.py (plain text extraction, no AI/ML),
 chunks it at paragraph level, and embeds each chunk into the tender-scoped Chroma collection —
 this tender's evidence, never another's (see app/vector_store.py's hard tender_id filter)."""
+import json
 import uuid
 from pathlib import Path
 from typing import List
@@ -9,6 +10,7 @@ from typing import List
 from fastapi import APIRouter, Form, HTTPException, UploadFile
 
 from app import vector_store
+from app.agents.kyc import extract_kyc
 from app.agents.methodology import extract_methodology
 from app.agents.procurement_timeline import extract_procurement_stages
 from app.agents.scoring_matrix import extract_scoring_bands
@@ -16,6 +18,7 @@ from app.agents.tender_requirements import extract_requirements
 from app.config import settings
 from app.db import db_session
 from app.document_extraction import read_document
+from app.models import KYCInsightOut
 
 router = APIRouter(tags=["evidence"])
 
@@ -54,6 +57,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
     requirements_extracted = 0
     scoring_bands_extracted = 0
     procurement_stages_extracted = 0
+    kyc_extracted = False
     if category == _METHODOLOGY_CATEGORY:
         # Best-effort: a failure here (including missing Azure credentials) must never break
         # evidence upload, which otherwise works with no Azure configuration at all since
@@ -118,6 +122,19 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
         except Exception:
             pass
 
+        try:
+            kyc = extract_kyc(parsed.full_text, tender_id)
+            if kyc:
+                with db_session() as conn:
+                    conn.execute(
+                        "INSERT INTO kyc_insights (tender_id, source_document, client_summary, key_facts, considerations) "
+                        "VALUES (?, ?, ?, ?, ?)",
+                        (tender_id, file.filename, kyc.client_summary, json.dumps(kyc.key_facts), json.dumps(kyc.considerations)),
+                    )
+                kyc_extracted = True
+        except Exception:
+            pass
+
     return {
         "tender_id": tender_id,
         "source_document": file.filename,
@@ -127,6 +144,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
         "requirements_extracted": requirements_extracted,
         "scoring_bands_extracted": scoring_bands_extracted,
         "procurement_stages_extracted": procurement_stages_extracted,
+        "kyc_extracted": kyc_extracted,
     }
 
 
@@ -152,3 +170,26 @@ def list_procurement_stages(tender_id: int) -> List[dict]:
             (tender_id,),
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+@router.get("/tenders/{tender_id}/kyc", response_model=List[KYCInsightOut])
+def list_kyc_insights(tender_id: int):
+    """One row per Strategy and Context document that genuinely discussed the client — usually
+    just one, but a tender can have more than one such upload."""
+    with db_session() as conn:
+        rows = conn.execute(
+            "SELECT id, tender_id, source_document, client_summary, key_facts, considerations "
+            "FROM kyc_insights WHERE tender_id = ? ORDER BY id",
+            (tender_id,),
+        ).fetchall()
+    return [
+        KYCInsightOut(
+            id=r["id"],
+            tender_id=r["tender_id"],
+            source_document=r["source_document"],
+            client_summary=r["client_summary"],
+            key_facts=json.loads(r["key_facts"]),
+            considerations=json.loads(r["considerations"]),
+        )
+        for r in rows
+    ]

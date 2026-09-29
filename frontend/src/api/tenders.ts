@@ -1,5 +1,5 @@
 import { apiGet, apiPost, apiUpload } from "./http";
-import type { Clarification, EvidenceChunk, ProcurementStage, Question, ScoringBand, Tender } from "./types";
+import type { Clarification, EvidenceChunk, KYCInsight, ProcurementStage, Question, ScoringBand, Tender } from "./types";
 
 export function listTenders() {
   return apiGet<Tender[]>("/tenders");
@@ -65,4 +65,8 @@ export function uploadEvidence(tenderId: number, file: File, category: string) {
 
 export function listProcurementStages(tenderId: number) {
   return apiGet<ProcurementStage[]>(`/tenders/${tenderId}/procurement-stages`);
+}
+
+export function listKycInsights(tenderId: number) {
+  return apiGet<KYCInsight[]>(`/tenders/${tenderId}/kyc`);
 }

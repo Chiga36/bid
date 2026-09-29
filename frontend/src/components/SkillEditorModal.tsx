@@ -68,7 +68,7 @@ export default function SkillEditorModal({ agentName, promptFiles, tenderId, onC
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-6" onClick={onClose}>
       <div
-        className="flex max-h-[85vh] w-full max-w-2xl flex-col gap-3 rounded-lg bg-white p-5 shadow-xl"
+        className="flex h-[90vh] w-full max-w-5xl flex-col gap-3 rounded-lg bg-white p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
@@ -118,7 +118,7 @@ export default function SkillEditorModal({ agentName, promptFiles, tenderId, onC
           <p className="text-xs text-slate-400">Loading...</p>
         ) : (
           <textarea
-            className="h-80 flex-1 resize-none rounded-md border border-slate-300 p-3 font-mono text-xs"
+            className="min-h-0 flex-1 resize-none rounded-md border border-slate-300 p-3 font-mono text-xs"
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
