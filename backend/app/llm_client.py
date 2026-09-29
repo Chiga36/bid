@@ -43,6 +43,23 @@ def _load_prompt(prompt_file: str) -> str:
     return _prompt_cache[prompt_file]
 
 
+def _resolve_template(prompt_file: str, tender_id: Optional[int]) -> str:
+    """A tender-specific customisation (see app/routers/prompts.py's PUT endpoint) always wins
+    over the on-disk default when one exists for this (tender_id, prompt_file) pair — read fresh
+    from the DB every call, deliberately never cached, so a just-saved edit takes effect on the
+    very next call. No tender_id, or no override row for this tender, falls back to the disk-
+    cached default exactly as before this function existed."""
+    if tender_id is not None:
+        with db_session() as conn:
+            row = conn.execute(
+                "SELECT content_text FROM prompt_overrides WHERE tender_id = ? AND prompt_file = ?",
+                (tender_id, prompt_file),
+            ).fetchone()
+        if row is not None:
+            return row["content_text"]
+    return _load_prompt(prompt_file)
+
+
 def _prompt_version_hash(template: str) -> str:
     return hashlib.sha256(template.encode("utf-8")).hexdigest()[:12]
 
@@ -82,12 +99,16 @@ def call_structured(
     variables: dict,
     response_model: Type[T],
     temperature: Optional[float] = None,
+    tender_id: Optional[int] = None,
 ) -> T:
     """Loads `prompt_file`, fills in `variables`, and forces the model's reply into
     `response_model` (a Pydantic class). Every call is logged with the prompt's content hash,
-    so a prompt-file edit is a tracked, visible version change, not a silent behaviour change.
+    so a prompt-file edit (whether on disk, or a tender's own saved customisation — see
+    `_resolve_template`) is a tracked, visible version change, not a silent behaviour change.
+    `tender_id`, when given, lets this tender's own saved customisation of `prompt_file` (if any)
+    override the shared default — every other tender keeps using the default untouched.
     """
-    template = _load_prompt(prompt_file)
+    template = _resolve_template(prompt_file, tender_id)
     prompt_text = template.format(**variables)
     version_hash = _prompt_version_hash(template)
 

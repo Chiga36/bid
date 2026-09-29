@@ -14,7 +14,7 @@ the draft, and that quote IS verified as a genuine substring of `draft_text` aft
 exactly like Completeness verifies its own quotes — see `_verify_gap_excerpts` below.
 """
 import re
-from typing import List
+from typing import List, Optional
 
 from app import llm_client
 from app.models import GapEntry, Theme, ThemeReviewResult
@@ -67,6 +67,7 @@ def run_theme_review(
     draft_text: str,
     evidence_context: str,
     sub_questions: List[str],
+    tender_id: Optional[int] = None,
 ) -> ThemeReviewResult:
     result = llm_client.call_structured(
         agent=AGENT_NAME,
@@ -80,6 +81,7 @@ def run_theme_review(
             "sub_questions_block": _format_sub_questions_block(sub_questions),
         },
         response_model=ThemeReviewResult,
+        tender_id=tender_id,
     )
     result.gaps = _verify_gap_excerpts(result.gaps, draft_text)
     return result

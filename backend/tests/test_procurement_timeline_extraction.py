@@ -72,9 +72,9 @@ def test_prose_result_verbatim_guard(monkeypatch):
 
 
 def test_extract_procurement_stages_falls_back_to_prose_when_no_table_matches(monkeypatch):
-    monkeypatch.setattr(procurement_timeline, "_extract_from_tables", lambda tables: [])
+    monkeypatch.setattr(procurement_timeline, "_extract_from_tables", lambda tables, tender_id=None: [])
 
-    def fake_prose(document_text):
+    def fake_prose(document_text, tender_id=None):
         return [procurement_timeline.ExtractedStage(stage_name="ITT issued", stage_date="1 March 2026")]
 
     monkeypatch.setattr(procurement_timeline, "_extract_from_prose", fake_prose)
@@ -88,10 +88,12 @@ def test_extract_procurement_stages_prefers_table_result_over_prose(monkeypatch)
     monkeypatch.setattr(
         procurement_timeline,
         "_extract_from_tables",
-        lambda tables: [procurement_timeline.ExtractedStage(stage_name="From table", stage_date="1 March 2026")],
+        lambda tables, tender_id=None: [
+            procurement_timeline.ExtractedStage(stage_name="From table", stage_date="1 March 2026")
+        ],
     )
 
-    def fail_if_called(document_text):
+    def fail_if_called(document_text, tender_id=None):
         raise AssertionError("prose fallback should not run when a table already yielded stages")
 
     monkeypatch.setattr(procurement_timeline, "_extract_from_prose", fail_if_called)

@@ -64,8 +64,16 @@ def decompose_question(question_id: int):
     methodology_context = _methodology_context_for_tender(tender_id)
     tender_instructions_chunks = vector_store.query_tender_requirements(tender_id, question["question_text"])
     tender_instructions_context = "\n\n".join(tender_instructions_chunks)
+    evidence_chunks = vector_store.query_evidence(tender_id, question["question_text"])
+    evidence_context = "\n\n".join(evidence_chunks)
     candidates = run_decomposition(
-        question["title"], question["question_text"], tables, methodology_context, tender_instructions_context
+        question["title"],
+        question["question_text"],
+        tables,
+        methodology_context,
+        tender_instructions_context,
+        evidence_context,
+        tender_id,
     )
 
     created: List[dict] = []
@@ -76,13 +84,13 @@ def decompose_question(question_id: int):
                 """
                 INSERT INTO elements (
                     question_id, kind, value_text, source_quote, elaboration, answer_guidance,
-                    extraction_method, locked
+                    evidence_suggestion, extraction_method, locked
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
                 """,
                 (
                     question_id, c.kind, c.value_text, c.source_quote, c.elaboration, c.answer_guidance,
-                    c.extraction_method,
+                    c.evidence_suggestion, c.extraction_method,
                 ),
             )
             row = conn.execute("SELECT * FROM elements WHERE id = ?", (cur.lastrowid,)).fetchone()

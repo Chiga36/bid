@@ -23,9 +23,19 @@ def init_db() -> None:
         conn.executescript(schema_sql)
         conn.commit()
         _migrate_constraint_kind_to_sub_question(conn)
+        _add_evidence_suggestion_column(conn)
         conn.commit()
     finally:
         conn.close()
+
+
+def _add_evidence_suggestion_column(conn: sqlite3.Connection) -> None:
+    """Plain additive column, unlike the constraint->sub_question rename above — no CHECK
+    constraint involved, so a simple guarded ALTER TABLE is enough, no rebuild-and-copy needed.
+    Safe to run on every startup; a no-op once the column already exists."""
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(elements)").fetchall()}
+    if "evidence_suggestion" not in columns:
+        conn.execute("ALTER TABLE elements ADD COLUMN evidence_suggestion TEXT")
 
 
 def _migrate_constraint_kind_to_sub_question(conn: sqlite3.Connection) -> None:

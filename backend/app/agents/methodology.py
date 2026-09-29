@@ -16,12 +16,13 @@ from app.models import MethodologyExtraction
 AGENT_NAME = "methodology"
 
 
-def extract_methodology(document_text: str) -> Optional[str]:
+def extract_methodology(document_text: str, tender_id: Optional[int] = None) -> Optional[str]:
     result: MethodologyExtraction = llm_client.call_structured(
         agent=AGENT_NAME,
         prompt_file="methodology_extract_v1.txt",
         variables={"document_text": document_text},
         response_model=MethodologyExtraction,
+        tender_id=tender_id,
     )
     if not result.methodology_found or not result.summary:
         return None

@@ -45,7 +45,7 @@ def score_draft(draft_id: int):
             pass  # malformed rule value: fall back to the default rather than fail the whole scoring run
 
     bands = [ScoringBandRow(band_value=r["band_value"], descriptor_text=r["descriptor_text"]) for r in band_rows]
-    summary = run_scoring(draft["content_text"], bands, spread_threshold_steps)
+    summary = run_scoring(draft["content_text"], bands, spread_threshold_steps, tender["id"])
 
     with db_session() as conn:
         for run in summary.runs:

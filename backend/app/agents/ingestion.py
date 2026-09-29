@@ -9,7 +9,7 @@ discipline app/agents/decomposition.py already applies to sub-questions — a fa
 cannot reach the database.
 """
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from app import llm_client
 from app.models import QuestionExtractionResult
@@ -29,12 +29,13 @@ class CandidateQuestion:
     category: str  # "sq" | "pass_fail" | "scored"
 
 
-def _extract_from_chunk(chunk_text: str) -> List[CandidateQuestion]:
+def _extract_from_chunk(chunk_text: str, tender_id: Optional[int] = None) -> List[CandidateQuestion]:
     result: QuestionExtractionResult = llm_client.call_structured(
         agent=AGENT_NAME,
         prompt_file="ingestion_extract_v1.txt",
         variables={"document_text": chunk_text},
         response_model=QuestionExtractionResult,
+        tender_id=tender_id,
     )
     candidates: List[CandidateQuestion] = []
     for q in result.questions:
@@ -44,9 +45,9 @@ def _extract_from_chunk(chunk_text: str) -> List[CandidateQuestion]:
     return candidates
 
 
-def extract_questions(document_text: str) -> List[CandidateQuestion]:
+def extract_questions(document_text: str, tender_id: Optional[int] = None) -> List[CandidateQuestion]:
     chunks = split_into_chunks(document_text, _CHUNK_CHAR_LIMIT)
     candidates: List[CandidateQuestion] = []
     for chunk in chunks:
-        candidates.extend(_extract_from_chunk(chunk))
+        candidates.extend(_extract_from_chunk(chunk, tender_id))
     return candidates

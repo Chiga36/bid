@@ -91,6 +91,7 @@ def create_theme_review(draft_id: int):
         draft_text=draft["content_text"],
         evidence_context=evidence_context,
         sub_questions=sub_questions,
+        tender_id=question["tender_id"],
     )
 
     with db_session() as conn:

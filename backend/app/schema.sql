@@ -43,8 +43,9 @@ CREATE TABLE IF NOT EXISTS elements (
     source_quote      TEXT,
     -- Populated only for kind='sub_question'. Genuine synthesis (not verbatim extraction), same
     -- treatment as Theme Review's prose fields — never substring-verified against the source.
-    elaboration       TEXT,
-    answer_guidance   TEXT,
+    elaboration         TEXT,
+    answer_guidance     TEXT,
+    evidence_suggestion TEXT,
     extraction_method TEXT NOT NULL CHECK (extraction_method IN ('rule', 'llm')),
     locked            INTEGER NOT NULL DEFAULT 0,
     created_at        TEXT NOT NULL DEFAULT (datetime('now'))
@@ -112,6 +113,19 @@ CREATE TABLE IF NOT EXISTS llm_call_log (
     tokens_out          INTEGER,
     latency_ms          INTEGER,
     created_at          TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Per-tender skill (prompt) customisation — see app/llm_client.py's call_structured(). A tender
+-- with no row here for a given prompt_file just uses the default file on disk; editing a skill
+-- never affects any other tender. One row per (tender_id, prompt_file), always overwritten in
+-- place on save (no version history — "Reset to default" just deletes the row).
+CREATE TABLE IF NOT EXISTS prompt_overrides (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    tender_id    INTEGER NOT NULL REFERENCES tenders(id),
+    prompt_file  TEXT NOT NULL,
+    content_text TEXT NOT NULL,
+    updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(tender_id, prompt_file)
 );
 
 -- check_type: word_count | diagram_count | cross_reference | pass_fail_section

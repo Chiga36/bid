@@ -14,7 +14,7 @@ as free text, never parsed into a real date, since source documents state dates 
 varying precision ("14 March 2026", "Q2 2026", "TBC").
 """
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from app import llm_client
 from app.document_extraction import RawTable
@@ -45,13 +45,14 @@ def _looks_like_timetable(serialized: str) -> bool:
     return any(word in serialized.lower() for word in _SIGNAL_WORDS)
 
 
-def _extract_from_table(table: RawTable) -> List[ExtractedStage]:
+def _extract_from_table(table: RawTable, tender_id: Optional[int] = None) -> List[ExtractedStage]:
     serialized = _serialize_table(table)
     result: ProcurementTimelineTableResult = llm_client.call_structured(
         agent=AGENT_NAME,
         prompt_file="procurement_timeline_extract_table_v1.txt",
         variables={"table_text": serialized},
         response_model=ProcurementTimelineTableResult,
+        tender_id=tender_id,
     )
     if not result.is_procurement_timeline:
         return []
@@ -62,25 +63,26 @@ def _extract_from_table(table: RawTable) -> List[ExtractedStage]:
     ]
 
 
-def _extract_from_tables(tables: List[RawTable]) -> List[ExtractedStage]:
+def _extract_from_tables(tables: List[RawTable], tender_id: Optional[int] = None) -> List[ExtractedStage]:
     for table in tables:
         if not table.rows or len(table.rows) > _MAX_TABLE_ROWS:
             continue
         serialized = _serialize_table(table)
         if not _looks_like_timetable(serialized):
             continue
-        stages = _extract_from_table(table)
+        stages = _extract_from_table(table, tender_id)
         if stages:
             return stages
     return []
 
 
-def _extract_from_chunk(chunk_text: str) -> List[ExtractedStage]:
+def _extract_from_chunk(chunk_text: str, tender_id: Optional[int] = None) -> List[ExtractedStage]:
     result: ProcurementTimelineProseResult = llm_client.call_structured(
         agent=AGENT_NAME,
         prompt_file="procurement_timeline_extract_prose_v1.txt",
         variables={"document_text": chunk_text},
         response_model=ProcurementTimelineProseResult,
+        tender_id=tender_id,
     )
     return [
         ExtractedStage(stage_name=s.stage_name, stage_date=s.stage_date)
@@ -89,16 +91,18 @@ def _extract_from_chunk(chunk_text: str) -> List[ExtractedStage]:
     ]
 
 
-def _extract_from_prose(document_text: str) -> List[ExtractedStage]:
+def _extract_from_prose(document_text: str, tender_id: Optional[int] = None) -> List[ExtractedStage]:
     chunks = split_into_chunks(document_text, _CHUNK_CHAR_LIMIT)
     stages: List[ExtractedStage] = []
     for chunk in chunks:
-        stages.extend(_extract_from_chunk(chunk))
+        stages.extend(_extract_from_chunk(chunk, tender_id))
     return stages
 
 
-def extract_procurement_stages(tables: List[RawTable], document_text: str) -> List[ExtractedStage]:
-    table_stages = _extract_from_tables(tables)
+def extract_procurement_stages(
+    tables: List[RawTable], document_text: str, tender_id: Optional[int] = None
+) -> List[ExtractedStage]:
+    table_stages = _extract_from_tables(tables, tender_id)
     if table_stages:
         return table_stages
-    return _extract_from_prose(document_text)
+    return _extract_from_prose(document_text, tender_id)

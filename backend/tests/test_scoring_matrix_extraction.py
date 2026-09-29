@@ -20,7 +20,7 @@ def test_looks_like_scoring_matrix_rejects_unrelated_table():
 
 def test_extract_scoring_bands_skips_oversized_tables(monkeypatch):
     calls = []
-    monkeypatch.setattr(scoring_matrix, "_extract_from_table", lambda t: calls.append(t) or [])
+    monkeypatch.setattr(scoring_matrix, "_extract_from_table", lambda t, tender_id=None: calls.append(t) or [])
     huge_table = RawTable(rows=[["Quality Criteria", "Score"]] + [["row", "x"] for _ in range(100)])
     result = scoring_matrix.extract_scoring_bands([huge_table])
     assert result == []
@@ -29,7 +29,7 @@ def test_extract_scoring_bands_skips_oversized_tables(monkeypatch):
 
 def test_extract_scoring_bands_skips_tables_with_no_signal(monkeypatch):
     calls = []
-    monkeypatch.setattr(scoring_matrix, "_extract_from_table", lambda t: calls.append(t) or [])
+    monkeypatch.setattr(scoring_matrix, "_extract_from_table", lambda t, tender_id=None: calls.append(t) or [])
     unrelated_table = RawTable(rows=[["Contact", "Email"], ["John Smith", "john@example.com"]])
     result = scoring_matrix.extract_scoring_bands([unrelated_table])
     assert result == []
@@ -78,7 +78,7 @@ def test_not_a_scoring_matrix_returns_no_bands(monkeypatch):
 
 
 def test_extract_scoring_bands_returns_first_verified_table(monkeypatch):
-    def fake_extract(table):
+    def fake_extract(table, tender_id=None):
         # Only the second table (identifiable by its first cell) yields real bands.
         if table.rows[0][0] == "Quality Criteria":
             return [scoring_matrix.ExtractedBand(band_value=75, descriptor_text="Good.")]

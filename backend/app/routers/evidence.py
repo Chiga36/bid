@@ -59,7 +59,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
         # evidence upload, which otherwise works with no Azure configuration at all since
         # Chroma's embedding is local.
         try:
-            summary = extract_methodology(parsed.full_text)
+            summary = extract_methodology(parsed.full_text, tender_id)
             if summary:
                 with db_session() as conn:
                     conn.execute(
@@ -71,7 +71,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
             pass
 
         try:
-            requirements = extract_requirements(parsed.full_text)
+            requirements = extract_requirements(parsed.full_text, tender_id)
             if requirements:
                 with db_session() as conn:
                     for req in requirements:
@@ -88,7 +88,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
             pass
 
         try:
-            bands = extract_scoring_bands(parsed.tables)
+            bands = extract_scoring_bands(parsed.tables, tender_id)
             if bands:
                 with db_session() as conn:
                     # Same replace semantics as the manual POST /tenders/{id}/scoring-bands
@@ -105,7 +105,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
             pass
 
         try:
-            stages = extract_procurement_stages(parsed.tables, parsed.full_text)
+            stages = extract_procurement_stages(parsed.tables, parsed.full_text, tender_id)
             if stages:
                 with db_session() as conn:
                     for stage in stages:

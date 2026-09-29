@@ -78,6 +78,7 @@ def run_recommendation(
             "evaluation_methodology_section": methodology_section,
         },
         response_model=RecommendationResult,
+        tender_id=tender_id,
     )
 
     rows: List[RecommendationRow] = []

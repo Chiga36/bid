@@ -296,6 +296,12 @@ export default function ResponseBuilder() {
                         {el.answer_guidance}
                       </p>
                     )}
+                    {el.evidence_suggestion && (
+                      <p className="mt-1 pl-3 text-slate-600">
+                        <span className="font-medium text-slate-500">Evidence to draw on: </span>
+                        {el.evidence_suggestion}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

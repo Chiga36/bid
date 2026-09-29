@@ -40,6 +40,7 @@ export interface ElementRow {
   source_quote: string | null;
   elaboration: string | null;
   answer_guidance: string | null;
+  evidence_suggestion: string | null;
   extraction_method: "rule" | "llm";
   locked: boolean;
 }
@@ -152,6 +153,12 @@ export interface AgentPrompt {
   agent: string;
   filename: string;
   content: string;
+}
+
+export interface TenderPrompt {
+  prompt_file: string;
+  content_text: string;
+  is_override: boolean;
 }
 
 export class ApiError extends Error {

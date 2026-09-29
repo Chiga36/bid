@@ -8,7 +8,7 @@ call is ever handed an unbounded document — and the same verbatim-verification
 requirement_text is checked as a genuine substring of its source chunk before being accepted.
 """
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from app import llm_client
 from app.models import TenderRequirementExtractionResult
@@ -26,12 +26,13 @@ class ExtractedRequirement:
     strength: str
 
 
-def _extract_from_chunk(chunk_text: str) -> List[ExtractedRequirement]:
+def _extract_from_chunk(chunk_text: str, tender_id: Optional[int] = None) -> List[ExtractedRequirement]:
     result: TenderRequirementExtractionResult = llm_client.call_structured(
         agent=AGENT_NAME,
         prompt_file="tender_requirements_extract_v1.txt",
         variables={"document_text": chunk_text},
         response_model=TenderRequirementExtractionResult,
+        tender_id=tender_id,
     )
     extracted: List[ExtractedRequirement] = []
     for r in result.requirements:
@@ -43,9 +44,9 @@ def _extract_from_chunk(chunk_text: str) -> List[ExtractedRequirement]:
     return extracted
 
 
-def extract_requirements(document_text: str) -> List[ExtractedRequirement]:
+def extract_requirements(document_text: str, tender_id: Optional[int] = None) -> List[ExtractedRequirement]:
     chunks = split_into_chunks(document_text, _CHUNK_CHAR_LIMIT)
     requirements: List[ExtractedRequirement] = []
     for chunk in chunks:
-        requirements.extend(_extract_from_chunk(chunk))
+        requirements.extend(_extract_from_chunk(chunk, tender_id))
     return requirements

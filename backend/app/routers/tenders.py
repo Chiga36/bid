@@ -107,7 +107,7 @@ async def upload_document(tender_id: int, file: UploadFile):
 
     parsed = read_document(dest_path)
     document_text = exclude_sheets(parsed.full_text, _EXCLUDED_SHEET_PATTERNS)
-    candidates = extract_questions(document_text)
+    candidates = extract_questions(document_text, tender_id)
 
     created: List[dict] = []
     with db_session() as conn:

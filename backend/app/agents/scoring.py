@@ -51,13 +51,16 @@ def _format_band_descriptors(bands: List[ScoringBandRow], shuffle_seed: int) -> 
     return "\n".join(f"- Band {b.band_value}: {b.descriptor_text}" for b in ordered)
 
 
-def run_scoring_pass(draft_text: str, bands: List[ScoringBandRow], shuffle_seed: int) -> ScoringPassResult:
+def run_scoring_pass(
+    draft_text: str, bands: List[ScoringBandRow], shuffle_seed: int, tender_id: Optional[int] = None
+) -> ScoringPassResult:
     band_descriptors = _format_band_descriptors(bands, shuffle_seed)
     return llm_client.call_structured(
         agent=AGENT_NAME,
         prompt_file="scoring_pass_v1.txt",
         variables={"band_descriptors": band_descriptors, "draft_text": draft_text},
         response_model=ScoringPassResult,
+        tender_id=tender_id,
     )
 
 
@@ -73,7 +76,7 @@ def compute_confidence(band_values: List[int], spread_threshold_steps: int = 1) 
 
 
 def run_moderator(
-    draft_text: str, bands: List[ScoringBandRow], passes: List[ScoringPassResult]
+    draft_text: str, bands: List[ScoringBandRow], passes: List[ScoringPassResult], tender_id: Optional[int] = None
 ) -> ScoringModeratorResult:
     band_descriptors = _format_band_descriptors(bands, shuffle_seed=0)
     variables = {"band_descriptors": band_descriptors, "draft_text": draft_text}
@@ -85,11 +88,16 @@ def run_moderator(
         prompt_file="scoring_moderator_v1.txt",
         variables=variables,
         response_model=ScoringModeratorResult,
+        tender_id=tender_id,
     )
 
 
-def run_scoring(draft_text: str, bands: List[ScoringBandRow], spread_threshold_steps: int = 1) -> ScoringSummaryRow:
-    pass_results: List[ScoringPassResult] = [run_scoring_pass(draft_text, bands, shuffle_seed=i) for i in range(3)]
+def run_scoring(
+    draft_text: str, bands: List[ScoringBandRow], spread_threshold_steps: int = 1, tender_id: Optional[int] = None
+) -> ScoringSummaryRow:
+    pass_results: List[ScoringPassResult] = [
+        run_scoring_pass(draft_text, bands, shuffle_seed=i, tender_id=tender_id) for i in range(3)
+    ]
     runs = [
         ScoringPassRow(
             pass_number=str(i + 1),
@@ -104,7 +112,7 @@ def run_scoring(draft_text: str, bands: List[ScoringBandRow], spread_threshold_s
     used_moderator = confidence == "low"
 
     if used_moderator:
-        moderator_result = run_moderator(draft_text, bands, pass_results)
+        moderator_result = run_moderator(draft_text, bands, pass_results, tender_id)
         runs.append(
             ScoringPassRow(
                 pass_number="moderator",

@@ -11,7 +11,7 @@ as a genuine substring of that table's own serialized text before being trusted,
 discipline app/agents/tender_requirements.py already applies to requirement_text.
 """
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from app import llm_client
 from app.document_extraction import RawTable
@@ -51,13 +51,14 @@ def _looks_like_scoring_matrix(serialized: str) -> bool:
     return all(str(n) in serialized for n in (0, 25, 50, 75, 100))
 
 
-def _extract_from_table(table: RawTable) -> List[ExtractedBand]:
+def _extract_from_table(table: RawTable, tender_id: Optional[int] = None) -> List[ExtractedBand]:
     serialized = _serialize_table(table)
     result: ScoringMatrixExtractionResult = llm_client.call_structured(
         agent=AGENT_NAME,
         prompt_file="scoring_matrix_extract_v1.txt",
         variables={"table_text": serialized},
         response_model=ScoringMatrixExtractionResult,
+        tender_id=tender_id,
     )
     if not result.is_scoring_matrix:
         return []
@@ -68,7 +69,7 @@ def _extract_from_table(table: RawTable) -> List[ExtractedBand]:
     ]
 
 
-def extract_scoring_bands(tables: List[RawTable]) -> List[ExtractedBand]:
+def extract_scoring_bands(tables: List[RawTable], tender_id: Optional[int] = None) -> List[ExtractedBand]:
     """Tries each table in order; the first one that both looks plausible AND the model confirms
     (with at least one verbatim-verified band) wins. Returns [] if nothing in this document is
     the tender's scoring matrix — callers must treat that as "nothing found", never fabricate
@@ -79,7 +80,7 @@ def extract_scoring_bands(tables: List[RawTable]) -> List[ExtractedBand]:
         serialized = _serialize_table(table)
         if not _looks_like_scoring_matrix(serialized):
             continue
-        bands = _extract_from_table(table)
+        bands = _extract_from_table(table, tender_id)
         if bands:
             return bands
     return []

@@ -5,8 +5,11 @@ column-mapping over parsed tables) — never the model — because these exact n
 as ground truth by everything downstream. Preamble/sub-questions/theme genuinely need the model
 to read the question, but every span it returns is verified as a real substring of the source
 text before it is written to the database; anything that fails is dropped, not guessed at. Each
-sub-question also carries two synthesis fields (elaboration, answer_guidance) that are never
-substring-checked — they're the model's own explanatory commentary, not extraction.
+sub-question also carries three synthesis fields (elaboration, answer_guidance,
+evidence_suggestion) that are never substring-checked — they're the model's own explanatory
+commentary, not extraction. evidence_suggestion is grounded in a real Chroma retrieval against
+this tender's evidence library (same query_evidence() Recommendation/Theme Review already use)
+so it points at real evidence rather than inventing a plausible-sounding one.
 """
 import re
 from dataclasses import dataclass
@@ -57,6 +60,7 @@ class ElementCandidate:
     extraction_method: str  # "rule" | "llm"
     elaboration: Optional[str] = None
     answer_guidance: Optional[str] = None
+    evidence_suggestion: Optional[str] = None
 
 
 def extract_limits_and_weights(
@@ -144,15 +148,18 @@ def extract_prose_elements(
     question_text: str,
     evaluation_methodology_context: str = "",
     tender_instructions_context: str = "",
+    evidence_context: str = "",
+    tender_id: Optional[int] = None,
 ) -> List[ElementCandidate]:
     """LLM call, constrained to verbatim extraction. Every sub-question's `text` (and the
     preamble) is checked against `question_text` with a plain substring test — the model cannot
-    get a fabricated span past this function. Each sub-question's `elaboration`/`answer_guidance`
-    are synthesis and pass through unchecked, same treatment as Theme Review's prose fields.
-    `evaluation_methodology_context` and `tender_instructions_context` (if any) are background
-    only, used to inform theme classification, elaboration and answer guidance — the prompt
-    explicitly forbids copying from either into preamble or sub-question text, which stay
-    verbatim-from-the-question-only regardless."""
+    get a fabricated span past this function. Each sub-question's `elaboration`/`answer_guidance`/
+    `evidence_suggestion` are synthesis and pass through unchecked, same treatment as Theme
+    Review's prose fields. `evaluation_methodology_context`, `tender_instructions_context`, and
+    `evidence_context` (if any) are background only, used to inform theme classification,
+    elaboration, answer guidance, and evidence pointers — the prompt explicitly forbids copying
+    from any of them into preamble or sub-question text, which stay verbatim-from-the-question-
+    only regardless."""
     result: DecompositionExtraction = llm_client.call_structured(
         agent=AGENT_NAME,
         prompt_file="decomposition_extract_v1.txt",
@@ -160,8 +167,10 @@ def extract_prose_elements(
             "question_text": question_text,
             "evaluation_methodology_section": _format_background_section(evaluation_methodology_context),
             "tender_instructions_section": _format_background_section(tender_instructions_context),
+            "evidence_context_section": _format_background_section(evidence_context),
         },
         response_model=DecompositionExtraction,
+        tender_id=tender_id,
     )
 
     candidates: List[ElementCandidate] = []
@@ -186,6 +195,7 @@ def extract_prose_elements(
                     extraction_method="llm",
                     elaboration=sub_question.elaboration,
                     answer_guidance=sub_question.answer_guidance,
+                    evidence_suggestion=sub_question.evidence_suggestion,
                 )
             )
         # Silently dropped if not a verbatim match — no fabricated sub-question reaches the DB.
@@ -212,13 +222,21 @@ def run_decomposition(
     tables: List[RawTable],
     evaluation_methodology_context: str = "",
     tender_instructions_context: str = "",
+    evidence_context: str = "",
+    tender_id: Optional[int] = None,
 ) -> List[ElementCandidate]:
     """Orchestrates both extraction layers. Callers (the router) are responsible for persisting
     the returned candidates to `elements` with locked=0 — decomposition never locks its own
     output. `evaluation_methodology_context` comes from app/agents/methodology.py's
-    format_methodology_context(); `tender_instructions_context` comes from a
-    query_tender_requirements() retrieval scoped to this question — both fetched by the router,
-    this function stays DB-free."""
+    format_methodology_context(); `tender_instructions_context` and `evidence_context` come from
+    query_tender_requirements()/query_evidence() retrievals scoped to this question — all three
+    fetched by the router, this function stays DB-free. `tender_id` lets this tender's own saved
+    skill customisation (if any) override the default decomposition prompt — see
+    app/llm_client.py's call_structured()."""
     candidates = extract_limits_and_weights(question_title, question_text, tables)
-    candidates.extend(extract_prose_elements(question_text, evaluation_methodology_context, tender_instructions_context))
+    candidates.extend(
+        extract_prose_elements(
+            question_text, evaluation_methodology_context, tender_instructions_context, evidence_context, tender_id
+        )
+    )
     return candidates

@@ -1,7 +1,8 @@
 """Unit tests for the Decomposition agent's LLM-calling half (extract_prose_elements) — the
-verbatim guard on each sub-question's `text`, and that `elaboration`/`answer_guidance` (genuine
-synthesis, not extraction) pass through untouched when `text` verifies. LLM call monkeypatched
-out, same pattern as test_ingestion_extraction.py / test_tender_requirements_extraction.py."""
+verbatim guard on each sub-question's `text`, and that `elaboration`/`answer_guidance`/
+`evidence_suggestion` (genuine synthesis, not extraction) pass through untouched when `text`
+verifies. LLM call monkeypatched out, same pattern as test_ingestion_extraction.py /
+test_tender_requirements_extraction.py."""
 from app.agents import decomposition
 from app.models import DecompositionExtraction, SubQuestionExtraction, Theme
 
@@ -15,6 +16,7 @@ def test_verbatim_sub_question_is_kept_with_elaboration_and_guidance_intact(monk
                     text="describe your approach to risk management",
                     elaboration="The evaluator wants a named, tender-relevant risk methodology.",
                     answer_guidance="Open with the top risk, state likelihood/impact, name the mitigation and owner.",
+                    evidence_suggestion="Reference the Acme Council case study above, which demonstrates this risk methodology.",
                 )
             ],
             theme=Theme.DELIVERY_METHODOLOGY,
@@ -30,6 +32,7 @@ def test_verbatim_sub_question_is_kept_with_elaboration_and_guidance_intact(monk
     assert sub_questions[0].value_text == "describe your approach to risk management"
     assert sub_questions[0].elaboration == "The evaluator wants a named, tender-relevant risk methodology."
     assert sub_questions[0].answer_guidance.startswith("Open with the top risk")
+    assert sub_questions[0].evidence_suggestion.startswith("Reference the Acme Council case study")
 
 
 def test_non_verbatim_sub_question_is_dropped_entirely(monkeypatch):
@@ -41,6 +44,7 @@ def test_non_verbatim_sub_question_is_dropped_entirely(monkeypatch):
                     text="This sentence was never in the source question at all.",
                     elaboration="Some elaboration that should never reach the DB.",
                     answer_guidance="Some guidance that should never reach the DB.",
+                    evidence_suggestion="Some evidence pointer that should never reach the DB.",
                 )
             ],
             theme=Theme.DELIVERY_METHODOLOGY,

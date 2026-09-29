@@ -74,6 +74,7 @@ def check_element(
             "tender_instructions_section": _format_background_section(tender_instructions_context),
         },
         response_model=CompletenessCheckResult,
+        tender_id=tender_id,
     )
 
     quote = result.quote or ""
