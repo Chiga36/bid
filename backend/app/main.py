@@ -15,6 +15,7 @@ from app.routers import (
     decomposition,
     drafts,
     evidence,
+    evidence_library,
     gate,
     prompts,
     recommendations,
@@ -75,6 +76,7 @@ app.include_router(gate.router)
 app.include_router(clarifications.router)
 app.include_router(business_rules.router)
 app.include_router(evidence.router)
+app.include_router(evidence_library.router)
 app.include_router(prompts.router)
 app.include_router(recommendations.router)
 app.include_router(benchmark.router)

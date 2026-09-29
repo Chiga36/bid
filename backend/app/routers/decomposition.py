@@ -57,7 +57,7 @@ def decompose_question(question_id: int):
     if has_requirements is None:
         raise HTTPException(
             status_code=400,
-            detail="Upload the competition tender instructions document under Strategy and Context first.",
+            detail="Upload the competition tender instructions document under Strategy first.",
         )
 
     tables = _tables_for_question(question)

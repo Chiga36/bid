@@ -128,6 +128,20 @@ export interface EvidenceChunk {
   created_at: string;
 }
 
+export interface GlobalEvidenceChunk {
+  id: number;
+  source_document: string;
+  category: string;
+  chunk_text: string;
+  created_at: string;
+}
+
+export interface GlobalEvidenceUpload {
+  source_document: string;
+  category: string;
+  chunks_ingested: number;
+}
+
 export type ImprovementPriority = "Critical" | "High" | "Medium" | "Low";
 
 export interface PrioritisedImprovement {

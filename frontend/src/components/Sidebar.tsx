@@ -65,6 +65,16 @@ function CompetitionInfoIcon({ className }: { className?: string }) {
   );
 }
 
+function EvidenceLibraryIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M5 4.5h6l2 2h6v12a1 1 0 01-1 1H5a1 1 0 01-1-1V5.5a1 1 0 011-1z" />
+      <path d="M8 12h8" />
+      <path d="M8 15.5h8" />
+    </svg>
+  );
+}
+
 function AgentOverviewIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -84,6 +94,7 @@ const NAV_ITEMS = [
   { to: "/status", label: "Status Report", Icon: StatusReportIcon },
   { to: "/info", label: "Competition Info", Icon: CompetitionInfoIcon },
   { to: "/skills", label: "Agent Overview", Icon: AgentOverviewIcon },
+  { to: "/evidence-library", label: "Evidence Library", Icon: EvidenceLibraryIcon },
 ];
 
 // Renders /kpmg-logo.png (frontend/public/kpmg-logo.png — anything under public/ is served at

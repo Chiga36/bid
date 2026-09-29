@@ -1,7 +1,9 @@
-"""Evidence library ingestion for the Recommendation agent. Reads an uploaded case
+"""Per-tender evidence library ingestion for the Recommendation agent. Reads an uploaded case
 study/CV/credential document with app/document_extraction.py (plain text extraction, no AI/ML),
-chunks it at paragraph level, and embeds each chunk into the tender-scoped Chroma collection —
-this tender's evidence, never another's (see app/vector_store.py's hard tender_id filter)."""
+chunks it at paragraph level, and embeds each chunk into the tender-scoped Chroma collection.
+Retrieval (vector_store.query_evidence) also merges in the cross-tender global evidence library —
+see routers/evidence_library.py — so this tender's own uploads are never the only source
+considered, but they're still the only thing ever *uploaded* here."""
 import json
 import uuid
 from pathlib import Path
@@ -23,7 +25,12 @@ from app.models import KYCInsightOut
 router = APIRouter(tags=["evidence"])
 
 _MIN_CHUNK_CHARS = 40
-_METHODOLOGY_CATEGORY = "strategy_and_context"
+# Split from a single "Strategy and Context" category: Strategy is the tender instructions
+# document (procurement process — evaluation methodology, requirements, scoring matrix,
+# timeline); Context is the client/background document. Kept as two separate gates below so KYC
+# only ever reads from Context, never Strategy.
+_STRATEGY_CATEGORY = "strategy"
+_CONTEXT_CATEGORY = "context"
 
 
 @router.post("/tenders/{tender_id}/evidence")
@@ -58,7 +65,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
     scoring_bands_extracted = 0
     procurement_stages_extracted = 0
     kyc_extracted = False
-    if category == _METHODOLOGY_CATEGORY:
+    if category == _STRATEGY_CATEGORY:
         # Best-effort: a failure here (including missing Azure credentials) must never break
         # evidence upload, which otherwise works with no Azure configuration at all since
         # Chroma's embedding is local.
@@ -122,6 +129,9 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
         except Exception:
             pass
 
+    if category == _CONTEXT_CATEGORY:
+        # KYC deliberately reads only from Context, never Strategy — the client background
+        # belongs in the Context upload, not the tender instructions document.
         try:
             kyc = extract_kyc(parsed.full_text, tender_id)
             if kyc:
@@ -174,8 +184,8 @@ def list_procurement_stages(tender_id: int) -> List[dict]:
 
 @router.get("/tenders/{tender_id}/kyc", response_model=List[KYCInsightOut])
 def list_kyc_insights(tender_id: int):
-    """One row per Strategy and Context document that genuinely discussed the client — usually
-    just one, but a tender can have more than one such upload."""
+    """One row per Context document that genuinely discussed the client — usually just one, but
+    a tender can have more than one such upload."""
     with db_session() as conn:
         rows = conn.execute(
             "SELECT id, tender_id, source_document, client_summary, key_facts, considerations "

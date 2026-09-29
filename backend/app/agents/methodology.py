@@ -1,6 +1,6 @@
 """Evaluation methodology extraction.
 
-One LLM call per "Strategy and Context" document, checking whether it genuinely discusses how the
+One LLM call per "Strategy" document, checking whether it genuinely discusses how the
 buyer evaluates responses. Most documents won't — the model is explicitly allowed to report
 nothing found rather than stretch a summary out of unrelated content, the same no-fabrication
 standard used everywhere else in this codebase.

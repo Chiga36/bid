@@ -44,6 +44,12 @@ document) — "Execute Ingestion Agent" stays disabled until both have at least 
 again server-side (`POST /questions/{id}/decompose` 400s if no tender-requirements register
 exists yet). The other four categories stay fully optional.
 
+**Strategy and Context used to be one combined mandatory upload; they're now two separate ones**
+(`strategy` and `context`) so Know Your Client can read the client-background document without
+ever mixing it with the tender instructions document that Methodology/Tender Requirements/Scoring
+Matrix/Procurement Timeline read (see `routers/evidence.py`'s `_STRATEGY_CATEGORY` /
+`_CONTEXT_CATEGORY` gates). Data Ingestion now has three mandatory categories, not two.
+
 ## What's here / what isn't
 
 Built: tender + document upload (plain-text extraction + a real LLM-powered Ingestion agent that
@@ -115,11 +121,13 @@ operations will fail while it's running.
    input before trusting it. If the file has a Selection Questionnaire sheet alongside the Award
    Questionnaire one, confirm no `sq`-category questions were extracted from it.
 2. Upload the competition tender instructions document under `POST /tenders/{id}/evidence` with
-   `category=strategy_and_context` *before* decomposing anything — `POST /questions/{id}/decompose`
-   400s until at least one row exists in `tender_requirements` for the tender. This one upload
-   feeds both evaluation-methodology extraction and Tender Requirements extraction; check
-   `GET /tenders/{id}/evidence` and inspect the `tender_requirements` table for sensible
-   categories/strengths.
+   `category=strategy` *before* decomposing anything — `POST /questions/{id}/decompose` 400s
+   until at least one row exists in `tender_requirements` for the tender. This one upload feeds
+   evaluation-methodology extraction, Tender Requirements extraction, Scoring Matrix extraction
+   and Procurement Timeline extraction; check `GET /tenders/{id}/evidence` and inspect the
+   `tender_requirements` table for sensible categories/strengths. Separately, upload a
+   client-background document with `category=context` to feed Know Your Client — check
+   `GET /tenders/{id}/kyc`.
 3. Drive the core flow by hand in this order: `POST /tenders` → `POST /tenders/{id}/scoring-bands`
    (your five band descriptors) → step 2 above → `POST /tenders/{id}/documents` (upload a real
    ITT — a sample is provided, see below) → `POST /questions/{id}/decompose` → eyeball the

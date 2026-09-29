@@ -28,8 +28,8 @@ export default function KYC() {
       <div>
         <h1 className="text-lg font-semibold text-slate-900">Know Your Client</h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-500">
-          Extracted automatically from the Strategy and Context upload — who this client is, and what to keep in mind
-          before writing the tender response for them specifically.
+          Extracted automatically from the Context upload — who this client is, and what to keep in mind before
+          writing the tender response for them specifically.
         </p>
       </div>
 
@@ -38,8 +38,8 @@ export default function KYC() {
       {!loading && insights.length === 0 && (
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <p className="text-sm text-slate-500">
-            No client insight extracted yet. Upload the tender instructions document under Strategy and Context in Data
-            Ingestion, or check back after ingestion finishes.
+            No client insight extracted yet. Upload a client background document under Context in Data Ingestion, or
+            check back after ingestion finishes.
           </p>
         </div>
       )}

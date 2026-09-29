@@ -69,12 +69,12 @@ export default function CompetitionInfo() {
       <div className="rounded-lg border border-slate-200 bg-white p-4">
         <p className="text-sm font-semibold text-slate-800">Procurement timeline</p>
         <p className="mt-0.5 text-xs text-slate-500">
-          Extracted automatically from the competition tender instructions document uploaded under Strategy and Context —
-          stage names and dates are copied verbatim, never reworded or inferred.
+          Extracted automatically from the competition tender instructions document uploaded under Strategy — stage
+          names and dates are copied verbatim, never reworded or inferred.
         </p>
         {procurementStages.length === 0 ? (
           <p className="mt-3 text-xs text-slate-400">
-            No procurement timeline extracted yet — upload the tender instructions document under Strategy and Context.
+            No procurement timeline extracted yet — upload the tender instructions document under Strategy.
           </p>
         ) : (
           <ul className="mt-3 divide-y divide-slate-100">

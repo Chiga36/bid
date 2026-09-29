@@ -6,15 +6,25 @@ import FileDropzone from "../components/FileDropzone";
 import { useTender } from "../context/TenderContext";
 
 // Only "Questionnaire" drives question extraction (POST /tenders/{id}/documents); the other
-// five all feed the tender-scoped evidence library (POST /tenders/{id}/evidence), tagged with
+// six all feed the tender-scoped evidence library (POST /tenders/{id}/evidence), tagged with
 // their own category — see the plan's "Frontend category -> backend mapping" section for why.
-// "Questionnaire" (key unchanged: competition_info) and "Strategy and Context" are the two
+// "Strategy", "Context" and "Questionnaire" (key unchanged: competition_info) are the three
 // mandatory categories, shown in step 1 of the wizard below; the rest are optional, step 2.
+// Strategy and Context used to be a single combined upload — split so agents that read the
+// procurement-process document (Methodology, Tender Requirements, Scoring Matrix, Procurement
+// Timeline) never mix with Know Your Client, which must read only the client-background
+// document (see backend/app/routers/evidence.py's _STRATEGY_CATEGORY / _CONTEXT_CATEGORY gates).
 const MANDATORY_CATEGORIES: { key: string; title: string; description: string; target: "document" | "evidence" }[] = [
   {
-    key: "strategy_and_context",
-    title: "Strategy and Context",
-    description: "The competition tender instructions document — evaluation methodology and the full requirements register are extracted from this.",
+    key: "strategy",
+    title: "Strategy",
+    description: "The competition tender instructions document — evaluation methodology, the full requirements register, the scoring matrix and the procurement timeline are extracted from this.",
+    target: "evidence",
+  },
+  {
+    key: "context",
+    title: "Context",
+    description: "A client background document — who the client is, their priorities and situation. Know Your Client is extracted from this, and only this.",
     target: "evidence",
   },
   {
@@ -55,12 +65,20 @@ const OPTIONAL_CATEGORIES: { key: string; title: string; description: string; ta
 const ALL_CATEGORIES = [...MANDATORY_CATEGORIES, ...OPTIONAL_CATEGORIES];
 const MANDATORY_CATEGORY_KEYS = MANDATORY_CATEGORIES.map((c) => c.key);
 
+// "A" / "A and B" / "A, B and C" — Array.join(" and ") alone reads oddly once there are 3+
+// mandatory categories ("A and B and C").
+function joinWithAnd(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  if (items.length === 2) return items.join(" and ");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
 type FilesByCategory = Record<string, File[]>;
 type Step = 1 | 2 | 3;
 
 const STEPS: { n: Step; label: string; sub: string }[] = [
-  { n: 1, label: "Mandatory field", sub: "Fill the required information" },
-  { n: 2, label: "Optional section", sub: "Seek or skip" },
+  { n: 1, label: "Mandatory Input", sub: "Fill the required information" },
+  { n: 2, label: "Optional Input", sub: "Seek or skip" },
   { n: 3, label: "Submit", sub: "Review & process" },
 ];
 
@@ -94,7 +112,7 @@ export default function DataIngestion() {
     setFilesByCategory((prev) => ({ ...prev, [key]: files }));
   }
 
-  // How far the stepper lets you click ahead: once both mandatory docs are in, every step is
+  // How far the stepper lets you click ahead: once every mandatory doc is in, every step is
   // reachable; until then, you can only ever be on (or click back to) step 1.
   let reachableStep: Step = 1;
   if (missingMandatory.length === 0) {
@@ -148,9 +166,9 @@ export default function DataIngestion() {
       <div>
         <h1 className="text-lg font-semibold text-slate-900">Knowledge Base Ingestion</h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-500">
-          Upload tender and supporting documents to the Bid Co-author agent. Questionnaire and Strategy and Context
-          are required before you can run the Ingestion agent. The other four categories are optional — upload as
-          few or as many files as you have. More files generally means more context for the agents to work with.
+          Upload tender and supporting documents to the Bid Co-author agent. Strategy, Context and Questionnaire are
+          required before you can run the Ingestion agent. The other four categories are optional — upload as few or
+          as many files as you have. More files generally means more context for the agents to work with.
         </p>
       </div>
 
@@ -174,8 +192,8 @@ export default function DataIngestion() {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-400">
                   {missingMandatory.length > 0
-                    ? `Add a file to ${missingMandatoryTitles.join(" and ")} to continue — both are required.`
-                    : "Both mandatory documents are ready."}
+                    ? `Add a file to ${joinWithAnd(missingMandatoryTitles)} to continue — all three are required.`
+                    : "All mandatory documents are ready."}
                 </span>
                 <button
                   disabled={missingMandatory.length > 0}

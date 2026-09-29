@@ -164,7 +164,7 @@ CREATE TABLE IF NOT EXISTS business_rules (
     UNIQUE (tender_id, rule_key)
 );
 
--- Evaluation methodology extracted from "Strategy and Context" uploads. Not every such document
+-- Evaluation methodology extracted from "Strategy" uploads. Not every such document
 -- discusses methodology — a document with nothing relevant simply gets no row here, matching the
 -- no-fabrication standard used everywhere else (see app/agents/methodology.py).
 CREATE TABLE IF NOT EXISTS evaluation_methodology (
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS evaluation_methodology (
 -- Relational record of what's in the Chroma vector store, for provenance queries that don't
 -- need to go through the vector DB. source_document is a human-readable label (filename), not a
 -- foreign key — evidence can be uploaded before or independently of a `documents` row.
--- category is purely a UI grouping label (the Data Ingestion screen's six categories) — it does
+-- category is purely a UI grouping label (the Data Ingestion screen's seven categories) — it does
 -- not affect retrieval, which still queries across all of a tender's evidence.
 CREATE TABLE IF NOT EXISTS evidence_chunks (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -187,6 +187,20 @@ CREATE TABLE IF NOT EXISTS evidence_chunks (
     category        TEXT NOT NULL DEFAULT 'general',
     chunk_text      TEXT NOT NULL,
     created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Cross-tender evidence library: past case studies/CVs/credentials/high-scoring responses
+-- uploaded once, not tied to any specific tender (see app/vector_store.py's reserved
+-- _GLOBAL_TENDER_ID sentinel — every tenders.id is >=1 via AUTOINCREMENT, so 0 is never a real
+-- tender). No tender_id/FK, deliberately mirrors evidence_chunks otherwise. chroma_chunk_id lets
+-- a delete here also remove the matching vector from Chroma.
+CREATE TABLE IF NOT EXISTS global_evidence_chunks (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_document  TEXT NOT NULL,
+    category         TEXT NOT NULL DEFAULT 'general',
+    chunk_text       TEXT NOT NULL,
+    chroma_chunk_id  TEXT NOT NULL,
+    created_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Recommendation agent output. Capped at 3 rows per draft by the agent itself, ranked.
@@ -216,7 +230,7 @@ CREATE TABLE IF NOT EXISTS benchmark_cases (
 
 -- Tender Requirements agent output (see app/agents/tender_requirements.py) — a traceable
 -- requirements register extracted from the competition tender instructions document uploaded
--- under Strategy and Context. Feeds Decomposition (better question understanding) and
+-- under Strategy. Feeds Decomposition (better question understanding) and
 -- Completeness (per-element context) via retrieval, not by being dumped wholesale into a prompt.
 CREATE TABLE IF NOT EXISTS tender_requirements (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -228,7 +242,7 @@ CREATE TABLE IF NOT EXISTS tender_requirements (
     created_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Procurement timetable extracted from a Strategy and Context upload (see
+-- Procurement timetable extracted from a Strategy upload (see
 -- app/agents/procurement_timeline.py) — stage_date stays free text, never parsed into a real
 -- date, since source documents state dates with wildly varying precision ("14 March 2026",
 -- "Q2 2026", "TBC").

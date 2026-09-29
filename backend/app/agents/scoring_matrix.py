@@ -1,5 +1,5 @@
 """Scoring Matrix agent — extracts a tender's own scoring-band descriptors (the "Scoring Matrix" /
-"Quality Criteria" table) from a Strategy and Context upload, so `scoring_bands` no longer has to
+"Quality Criteria" table) from a Strategy upload, so `scoring_bands` no longer has to
 be typed in by hand. Works on `RawTable`s (docx tables / xlsx sheets, see
 app/document_extraction.py) rather than chunked prose — a scoring matrix is a real table, not
 free text.

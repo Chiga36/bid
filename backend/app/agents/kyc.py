@@ -1,7 +1,9 @@
 """Know Your Client (KYC) agent.
 
-One LLM call per "Strategy and Context" document: what does this document genuinely reveal about
-the client, and what should the bid team keep in mind before writing the tender response for them
+One LLM call per "Context" document (deliberately not "Strategy" — see routers/evidence.py's
+_CONTEXT_CATEGORY gate — the client background belongs in Context, the tender instructions
+process document belongs in Strategy): what does this document genuinely reveal about the client,
+and what should the bid team keep in mind before writing the tender response for them
 specifically? This is synthesis, not verbatim extraction — same no-fabrication standard as
 methodology.py, since inventing client detail that isn't really in the document is worse than
 reporting nothing found.

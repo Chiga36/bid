@@ -1,5 +1,5 @@
 """Tender Requirements agent — a traceable requirements register extracted from the competition
-tender instructions document (uploaded under Strategy and Context). Feeds Decomposition (better
+tender instructions document (uploaded under Strategy). Feeds Decomposition (better
 question understanding) and Completeness (per-element context) via Chroma retrieval — never
 dumped wholesale into a prompt, since a real tender instructions document can be long.
 

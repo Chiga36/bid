@@ -26,7 +26,7 @@ def test_returns_extraction_when_client_info_found(monkeypatch):
 
     monkeypatch.setattr(kyc.llm_client, "call_structured", fake_call_structured)
 
-    result = kyc.extract_kyc("a strategy and context document with real client detail")
+    result = kyc.extract_kyc("a context document with real client detail")
     assert result is not None
     assert result.client_summary == "A regional NHS trust modernising its digital services."
     assert result.key_facts == ["Currently served by an incumbent supplier since 2019."]

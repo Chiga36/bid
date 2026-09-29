@@ -4,6 +4,7 @@ import Layout from "./components/Layout";
 import AgentOverview from "./pages/AgentOverview";
 import CompetitionInfo from "./pages/CompetitionInfo";
 import DataIngestion from "./pages/DataIngestion";
+import EvidenceLibrary from "./pages/EvidenceLibrary";
 import Home from "./pages/Home";
 import KYC from "./pages/KYC";
 import ResponseBuilder from "./pages/ResponseBuilder";
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/status" element={<StatusReport />} />
         <Route path="/info" element={<CompetitionInfo />} />
         <Route path="/skills" element={<AgentOverview />} />
+        <Route path="/evidence-library" element={<EvidenceLibrary />} />
       </Route>
     </Routes>
   );

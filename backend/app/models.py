@@ -215,8 +215,9 @@ class ProcurementTimelineProseResult(BaseModel):
 
 
 class KYCExtraction(BaseModel):
-    """Output of the Know Your Client agent's single LLM call against a Strategy and Context
-    upload. Synthesis, not verbatim extraction — same no-fabrication discipline as
+    """Output of the Know Your Client agent's single LLM call against a Context upload (never
+    Strategy — see routers/evidence.py's category split). Synthesis, not verbatim extraction —
+    same no-fabrication discipline as
     MethodologyExtraction: every point must be genuinely grounded in what the document says about
     this client, and the model is explicitly allowed to report nothing found rather than invent a
     client profile out of unrelated content."""
@@ -241,6 +242,20 @@ class KYCInsightOut(BaseModel):
     client_summary: Optional[str] = None
     key_facts: List[str]
     considerations: List[str]
+
+
+class GlobalEvidenceChunkOut(BaseModel):
+    id: int
+    source_document: str
+    category: str
+    chunk_text: str
+    created_at: str
+
+
+class GlobalEvidenceUploadOut(BaseModel):
+    source_document: str
+    category: str
+    chunks_ingested: int
 
 
 class ScoringPassResult(BaseModel):

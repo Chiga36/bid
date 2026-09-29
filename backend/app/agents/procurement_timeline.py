@@ -1,5 +1,5 @@
 """Procurement Timeline agent — extracts the tender's procurement timetable (stage name + date
-pairs, e.g. "ITT issued" / "14 March 2026") from a Strategy and Context upload.
+pairs, e.g. "ITT issued" / "14 March 2026") from a Strategy upload.
 
 Real timetables show up two ways: as a genuine table (same shape as a scoring matrix — see
 app/agents/scoring_matrix.py, whose table-classification pattern this reuses directly), or as a
