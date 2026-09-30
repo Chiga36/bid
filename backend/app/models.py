@@ -78,7 +78,6 @@ class ElementOut(BaseModel):
     source_quote: Optional[str] = None
     elaboration: Optional[str] = None
     answer_guidance: Optional[List[str]] = None
-    evidence_suggestion: Optional[str] = None
     extraction_method: Literal["rule", "llm"]
     locked: bool
 
@@ -125,21 +124,18 @@ class ScoringSummaryOut(BaseModel):
 class SubQuestionExtraction(BaseModel):
     """One decomposed sub-question. `text` MUST be a verbatim substring of the source question —
     the agent verifies this and drops anything that isn't, before it reaches the DB.
-    `elaboration`, `answer_guidance`, and `evidence_suggestion` are genuine synthesis (the
-    model's own words), never substring-checked — same treatment as Theme Review's prose fields.
-    `evidence_suggestion` in particular must never name a specific case study, client, or project
-    that isn't genuinely present in the retrieved evidence context it was given — the whole point
-    is pointing at real evidence, not inventing the appearance of some."""
+    `elaboration` and `answer_guidance` are genuine synthesis (the model's own words), never
+    substring-checked — same treatment as Theme Review's prose fields. `answer_guidance` must
+    never name a specific case study, client, or project that isn't genuinely present in the
+    retrieved evidence context it was given — the whole point is coaching toward real, provable
+    past delivery, not inventing the appearance of some."""
 
     text: str = Field(description="Verbatim sub-question text, an exact substring of the source question")
     elaboration: str = Field(
         description="Plain-language explanation of what this sub-question is really asking the bidder to demonstrate or prove"
     )
     answer_guidance: List[str] = Field(
-        description="2-3 brief, past-tense bullets describing what a strong answer already did (e.g. 'Named the risk and quantified its impact'), not present-tense instructions"
-    )
-    evidence_suggestion: str = Field(
-        description="What evidence from this tender's evidence library should be drawn on to answer this sub-question, grounded only in the evidence context actually given — states plainly if nothing relevant was found"
+        description="2-3 brief, past-tense, evidence-grounded bullets coaching the author toward citing genuine past delivery (a named example, a quantified outcome) rather than a future-tense promise — see the prompt for the full rubric"
     )
 
 

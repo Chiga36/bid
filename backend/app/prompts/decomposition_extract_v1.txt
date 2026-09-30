@@ -28,9 +28,9 @@ in this specific tender's actual expectations rather than generic advice):
 """
 
 Background: evidence chunks retrieved from this tender's own evidence library (case studies, CVs,
-credentials — for context only, this is NOT part of the question text; use it ONLY to write
-"evidence_suggestion" for each sub-question below, never to write "preamble" or sub-question
-"text", and never copied into "elaboration"/"answer_guidance"):
+credentials — for context only, this is NOT part of the question text; use it to ground
+"answer_guidance" in real, named past work when genuinely relevant, never to write "preamble" or
+sub-question "text"):
 """
 {evidence_context_section}
 """
@@ -65,22 +65,26 @@ For each sub-question, provide:
   context above to make this specific to this client/tender where it genuinely helps; never assert
   a tender-specific fact that isn't actually present in that context.
 - "answer_guidance": 2-3 brief bullet points, each written in PAST TENSE as if describing what a
-  strong answer already did — not present-tense instructions. Frame each bullet as a retrospective
-  fact ("Named the specific risk and quantified its likelihood/impact", "Stated the mitigation put
-  in place and who owned it", "Explained how this reduced impact on the client's outcomes"), not an
-  imperative ("open with...", "state..."). Each bullet should be short (under 15 words) and
-  specific to this sub-question, not generic bid-writing advice that could apply to any question.
-  Return 2-3 bullets, never a single paragraph.
-- "evidence_suggestion": what evidence from the evidence-library background above should be drawn
-  on to answer this specific sub-question — e.g. "reference the [named project/client from the
-  evidence above] example, which demonstrates this exact capability" or "the CV/credential above
-  showing [specific relevant experience]." You MUST base this only on evidence chunks that are
-  genuinely present in the evidence-library background above — never invent, imply, or hint at a
-  case study, client name, project, or credential that isn't actually there. If nothing in the
-  evidence-library background is genuinely relevant to this sub-question, say so plainly (e.g.
-  "No directly relevant evidence found in the library yet — look for a case study demonstrating
-  [the specific capability this sub-question needs]") rather than stretching a loosely-related
-  chunk to sound like a match.
+  strong answer already did — not present-tense instructions. This must be EVIDENCE-BASED
+  coaching, not generic structure advice: an evaluator is not reassured by a future-tense promise
+  ("we will manage risk closely") — anyone can claim that. They're reassured by proof of past
+  delivery ("we identified this exact risk on [project] and mitigated it by..."), because that's
+  the only thing a competitor can't simply also claim. So every bullet should push the author
+  toward citing something genuinely provable: a named past project/client, a quantified or
+  verified outcome, a concrete result — not an abstract intention.
+  - If the evidence-library background above contains something genuinely relevant to this
+    sub-question, ground at least one bullet in it by name (e.g. "Named the [specific project/
+    client from the evidence above] where this exact capability was delivered, with the
+    quantified outcome achieved"). You MUST base this only on evidence chunks that are genuinely
+    present in the evidence-library background — never invent, imply, or hint at a case study,
+    client name, project, or credential that isn't actually there.
+  - If nothing in the evidence-library background is genuinely relevant to this sub-question,
+    still coach toward evidence generically (e.g. "Named a specific past client/project where
+    this was delivered and the measurable outcome achieved") rather than inventing a fake example
+    or falling back to abstract structure advice.
+  - Each bullet should be short (under 15 words) and specific to this sub-question, not generic
+    bid-writing advice that could apply to any question. Return 2-3 bullets, never a single
+    paragraph.
 
 Task 3 — Theme:
 Classify the question's primary theme as exactly one of: "Understanding & Outcomes", "Delivery
@@ -90,12 +94,12 @@ Knowledge Transfer", "Team & Resourcing", "Relevant Experience".
 Rules:
 - Every "preamble" and every sub-question's "text" MUST be an exact, character-for-character
   substring of the question text above. If you cannot find a genuine verbatim match, omit it
-  rather than inventing one. "elaboration", "answer_guidance", and "evidence_suggestion" are your
-  own synthesis and do NOT need to be verbatim — they must not, however, invent tender-specific
-  facts (evidence, requirements, evaluation weightings) that aren't present in the question text
-  or the background sections above. This matters most for "evidence_suggestion": naming evidence
-  that doesn't genuinely exist in the evidence-library background is exactly the kind of
-  fabrication this tool must never produce.
+  rather than inventing one. "elaboration" and "answer_guidance" are your own synthesis and do
+  NOT need to be verbatim — they must not, however, invent tender-specific facts (evidence,
+  requirements, evaluation weightings) that aren't present in the question text or the background
+  sections above. This matters most for "answer_guidance" when it names evidence: naming a case
+  study, client, or project that doesn't genuinely exist in the evidence-library background is
+  exactly the kind of fabrication this tool must never produce.
 - Do NOT extract a sentence as a sub-question if it only states a word limit, page limit, or
   diagram/figure limit (for example "Maximum 200 words." or "You may include up to 2 diagrams.").
   Those are captured separately, by a different process, and a draft can never meaningfully

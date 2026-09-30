@@ -1,8 +1,8 @@
 """Cross-tender evidence library. Not scoped to any tender — a case study, CV, or high-scoring
 response uploaded here is picked up automatically by every tender's Recommendation agent and
-Decomposition's evidence_suggestion, via vector_store.query_evidence's merge with the
-_GLOBAL_TENDER_ID sentinel, so a bid team never has to re-upload the same evidence for every bid
-they write.
+Decomposition's evidence-grounded answer_guidance, via vector_store.query_evidence's merge with
+the _GLOBAL_TENDER_ID sentinel, so a bid team never has to re-upload the same evidence for every
+bid they write.
 
 Same category vocabulary as the per-tender evidence categories (see DataIngestion's
 OPTIONAL_CATEGORIES) so the two feel like the same kind of thing to a user, just at a different

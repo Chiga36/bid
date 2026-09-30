@@ -362,13 +362,6 @@ export default function ResponseBuilder() {
                           </ul>
                         </div>
                       )}
-                      {el.evidence_suggestion && (
-                        <p className="mt-1 pl-3 text-slate-600">
-                          <span className="font-medium text-slate-500">Evidence to draw on: </span>
-                          {el.evidence_suggestion}
-                        </p>
-                      )}
-
                       <textarea
                         className="mt-2 min-h-[70px] w-full rounded-md border border-slate-300 p-2 text-xs"
                         placeholder="Write your answer to this sub-question here, including evidence..."

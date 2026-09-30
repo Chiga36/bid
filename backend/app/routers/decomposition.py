@@ -86,14 +86,14 @@ def decompose_question(question_id: int):
                 """
                 INSERT INTO elements (
                     question_id, kind, value_text, source_quote, elaboration, answer_guidance,
-                    evidence_suggestion, extraction_method, locked
+                    extraction_method, locked
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 0)
                 """,
                 (
                     question_id, c.kind, c.value_text, c.source_quote, c.elaboration,
                     json.dumps(c.answer_guidance) if c.answer_guidance is not None else None,
-                    c.evidence_suggestion, c.extraction_method,
+                    c.extraction_method,
                 ),
             )
             row = conn.execute("SELECT * FROM elements WHERE id = ?", (cur.lastrowid,)).fetchone()

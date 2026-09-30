@@ -40,7 +40,6 @@ export interface ElementRow {
   source_quote: string | null;
   elaboration: string | null;
   answer_guidance: string[] | null;
-  evidence_suggestion: string | null;
   extraction_method: "rule" | "llm";
   locked: boolean;
 }

@@ -43,9 +43,11 @@ CREATE TABLE IF NOT EXISTS elements (
     source_quote      TEXT,
     -- Populated only for kind='sub_question'. Genuine synthesis (not verbatim extraction), same
     -- treatment as Theme Review's prose fields — never substring-verified against the source.
+    -- answer_guidance is JSON-encoded (a list of 2-3 evidence-grounded, past-tense bullets, see
+    -- app/prompts/decomposition_extract_v1.txt) — there used to be a separate evidence_suggestion
+    -- column, removed in favour of folding evidence coaching directly into answer_guidance.
     elaboration         TEXT,
     answer_guidance     TEXT,
-    evidence_suggestion TEXT,
     extraction_method TEXT NOT NULL CHECK (extraction_method IN ('rule', 'llm')),
     locked            INTEGER NOT NULL DEFAULT 0,
     created_at        TEXT NOT NULL DEFAULT (datetime('now'))
