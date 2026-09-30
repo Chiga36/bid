@@ -77,7 +77,7 @@ class ElementOut(BaseModel):
     value_text: str
     source_quote: Optional[str] = None
     elaboration: Optional[str] = None
-    answer_guidance: Optional[str] = None
+    answer_guidance: Optional[List[str]] = None
     evidence_suggestion: Optional[str] = None
     extraction_method: Literal["rule", "llm"]
     locked: bool
@@ -135,8 +135,8 @@ class SubQuestionExtraction(BaseModel):
     elaboration: str = Field(
         description="Plain-language explanation of what this sub-question is really asking the bidder to demonstrate or prove"
     )
-    answer_guidance: str = Field(
-        description="A concrete, practical suggestion for how to structure the answer to this specific sub-question"
+    answer_guidance: List[str] = Field(
+        description="2-3 brief, past-tense bullets describing what a strong answer already did (e.g. 'Named the risk and quantified its impact'), not present-tense instructions"
     )
     evidence_suggestion: str = Field(
         description="What evidence from this tender's evidence library should be drawn on to answer this sub-question, grounded only in the evidence context actually given — states plainly if nothing relevant was found"
@@ -242,6 +242,20 @@ class KYCInsightOut(BaseModel):
     client_summary: Optional[str] = None
     key_facts: List[str]
     considerations: List[str]
+
+
+class EvidenceScoreIn(BaseModel):
+    answer_text: str
+
+
+class EvidenceScoreResult(BaseModel):
+    """Output of the Evidence Score agent — a lightweight, single-purpose check run against one
+    sub-question's own answer text (not a full draft), scoring how genuinely evidence-grounded
+    that answer is. Deliberately narrow: this is the per-sub-question "Check evidence" action in
+    Response Builder, not the full Completeness/Theme Review machinery."""
+
+    score: int = Field(ge=0, le=5, description="How well this answer is grounded in genuine, specific evidence, 0-5")
+    rationale: str = Field(description="One brief sentence explaining the score")
 
 
 class GlobalEvidenceChunkOut(BaseModel):
@@ -406,13 +420,13 @@ class ThemeReviewResult(BaseModel):
     matching the toolkit's own instruction not to invent evidence."""
 
     theme_fit: str
-    evaluator_summary: str
+    evaluator_summary: List[str] = Field(description="2-4 brief bullet points, not a paragraph")
     strengths: List[str]
     gaps: List[GapEntry]
     prioritised_improvements: List[PrioritisedImprovement]
     suggested_wording: List[str]
     evidence_required: List[str]
-    improved_answer_plan: str
+    improved_answer_plan: List[str] = Field(description="2-4 brief bullet points, not a paragraph")
     score_compliance: int = Field(ge=1, le=5)
     score_practicality: int = Field(ge=1, le=5)
     score_evidence: int = Field(ge=1, le=5)

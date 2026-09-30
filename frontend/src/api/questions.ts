@@ -1,5 +1,5 @@
 import { apiGet, apiPost } from "./http";
-import type { Draft, ElementRow } from "./types";
+import type { Draft, ElementRow, EvidenceScoreResult } from "./types";
 
 export function decomposeQuestion(questionId: number) {
   return apiPost<ElementRow[]>(`/questions/${questionId}/decompose`);
@@ -19,4 +19,8 @@ export function listDrafts(questionId: number) {
 
 export function createDraft(questionId: number, contentText: string) {
   return apiPost<Draft>(`/questions/${questionId}/drafts`, { content_text: contentText });
+}
+
+export function scoreElementEvidence(elementId: number, answerText: string) {
+  return apiPost<EvidenceScoreResult>(`/elements/${elementId}/evidence-score`, { answer_text: answerText });
 }

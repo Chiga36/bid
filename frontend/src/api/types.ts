@@ -39,7 +39,7 @@ export interface ElementRow {
   value_text: string;
   source_quote: string | null;
   elaboration: string | null;
-  answer_guidance: string | null;
+  answer_guidance: string[] | null;
   evidence_suggestion: string | null;
   extraction_method: "rule" | "llm";
   locked: boolean;
@@ -155,16 +155,21 @@ export interface GapEntry {
   gap: string;
 }
 
+export interface EvidenceScoreResult {
+  score: number;
+  rationale: string;
+}
+
 export interface ThemeReview {
   theme: string;
   theme_fit: string;
-  evaluator_summary: string;
+  evaluator_summary: string[];
   strengths: string[];
   gaps: GapEntry[];
   prioritised_improvements: PrioritisedImprovement[];
   suggested_wording: string[];
   evidence_required: string[];
-  improved_answer_plan: string;
+  improved_answer_plan: string[];
   score_compliance: number;
   score_practicality: number;
   score_evidence: number;

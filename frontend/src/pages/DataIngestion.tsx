@@ -8,23 +8,16 @@ import { useTender } from "../context/TenderContext";
 // Only "Questionnaire" drives question extraction (POST /tenders/{id}/documents); the other
 // six all feed the tender-scoped evidence library (POST /tenders/{id}/evidence), tagged with
 // their own category — see the plan's "Frontend category -> backend mapping" section for why.
-// "Strategy", "Context" and "Questionnaire" (key unchanged: competition_info) are the three
-// mandatory categories, shown in step 1 of the wizard below; the rest are optional, step 2.
-// Strategy and Context used to be a single combined upload — split so agents that read the
-// procurement-process document (Methodology, Tender Requirements, Scoring Matrix, Procurement
-// Timeline) never mix with Know Your Client, which must read only the client-background
-// document (see backend/app/routers/evidence.py's _STRATEGY_CATEGORY / _CONTEXT_CATEGORY gates).
+// "Strategy" and "Questionnaire" (key unchanged: competition_info) are the two mandatory
+// categories, shown in step 1 of the wizard below; the rest (including Context) are optional,
+// step 2. Context started out mandatory alongside Strategy, but PPT files there were taking a
+// very long time to render once deployed to App Service — moved to optional so a tender can be
+// ingested without waiting on it; Know Your Client just has nothing to show until it's uploaded.
 const MANDATORY_CATEGORIES: { key: string; title: string; description: string; target: "document" | "evidence" }[] = [
   {
     key: "strategy",
     title: "Strategy",
     description: "The competition tender instructions document — evaluation methodology, the full requirements register, the scoring matrix and the procurement timeline are extracted from this.",
-    target: "evidence",
-  },
-  {
-    key: "context",
-    title: "Context",
-    description: "A client background document — who the client is, their priorities and situation. Know Your Client is extracted from this, and only this.",
     target: "evidence",
   },
   {
@@ -36,6 +29,12 @@ const MANDATORY_CATEGORIES: { key: string; title: string; description: string; t
 ];
 
 const OPTIONAL_CATEGORIES: { key: string; title: string; description: string; target: "document" | "evidence" }[] = [
+  {
+    key: "context",
+    title: "Context",
+    description: "A client background document — who the client is, their priorities and situation. Know Your Client is extracted from this, and only this.",
+    target: "evidence",
+  },
   {
     key: "credentials",
     title: "Credentials",
@@ -166,9 +165,9 @@ export default function DataIngestion() {
       <div>
         <h1 className="text-lg font-semibold text-slate-900">Knowledge Base Ingestion</h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-500">
-          Upload tender and supporting documents to the Bid Co-author agent. Strategy, Context and Questionnaire are
-          required before you can run the Ingestion agent. The other four categories are optional — upload as few or
-          as many files as you have. More files generally means more context for the agents to work with.
+          Upload tender and supporting documents to the Bid Co-author agent. Strategy and Questionnaire are required
+          before you can run the Ingestion agent. The other five categories are optional — upload as few or as many
+          files as you have. More files generally means more context for the agents to work with.
         </p>
       </div>
 
@@ -192,8 +191,8 @@ export default function DataIngestion() {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-400">
                   {missingMandatory.length > 0
-                    ? `Add a file to ${joinWithAnd(missingMandatoryTitles)} to continue — all three are required.`
-                    : "All mandatory documents are ready."}
+                    ? `Add a file to ${joinWithAnd(missingMandatoryTitles)} to continue — both are required.`
+                    : "Both mandatory documents are ready."}
                 </span>
                 <button
                   disabled={missingMandatory.length > 0}

@@ -136,6 +136,11 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
             kyc = extract_kyc(parsed.full_text, tender_id)
             if kyc:
                 with db_session() as conn:
+                    # Replace semantics, same as POST /tenders/{id}/scoring-bands: a later
+                    # Context re-upload supersedes old KYC insights rather than accumulating
+                    # alongside them forever, so a stale/mistaken earlier upload never keeps
+                    # showing on the KYC page after being corrected.
+                    conn.execute("DELETE FROM kyc_insights WHERE tender_id = ?", (tender_id,))
                     conn.execute(
                         "INSERT INTO kyc_insights (tender_id, source_document, client_summary, key_facts, considerations) "
                         "VALUES (?, ?, ?, ?, ?)",

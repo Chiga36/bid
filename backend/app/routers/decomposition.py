@@ -1,16 +1,18 @@
 """Decomposition agent endpoints, and the human verification gate that locks its output before
 anything downstream (Deterministic checks, Completeness, Scoring) is allowed to trust it.
 """
+import json
 from typing import List
 
 from fastapi import APIRouter, HTTPException
 
 from app import vector_store
 from app.agents.decomposition import run_decomposition
+from app.agents.evidence_score import score_sub_answer_evidence
 from app.agents.methodology import format_methodology_context
 from app.db import db_session
 from app.document_extraction import RawTable, read_document
-from app.models import ElementOut
+from app.models import ElementOut, EvidenceScoreIn, EvidenceScoreResult
 
 router = APIRouter(tags=["decomposition"])
 
@@ -89,7 +91,8 @@ def decompose_question(question_id: int):
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
                 """,
                 (
-                    question_id, c.kind, c.value_text, c.source_quote, c.elaboration, c.answer_guidance,
+                    question_id, c.kind, c.value_text, c.source_quote, c.elaboration,
+                    json.dumps(c.answer_guidance) if c.answer_guidance is not None else None,
                     c.evidence_suggestion, c.extraction_method,
                 ),
             )
@@ -123,4 +126,30 @@ def lock_register(question_id: int):
 def _element_out(row: dict) -> dict:
     row = dict(row)
     row["locked"] = bool(row["locked"])
+    if row.get("answer_guidance"):
+        try:
+            row["answer_guidance"] = json.loads(row["answer_guidance"])
+        except (json.JSONDecodeError, TypeError):
+            # A plain-string row from before this field became a JSON-encoded list (or any other
+            # malformed value) — degrade gracefully to a single-item list rather than 500ing.
+            row["answer_guidance"] = [row["answer_guidance"]]
     return row
+
+
+@router.post("/elements/{element_id}/evidence-score", response_model=EvidenceScoreResult)
+def score_element_evidence(element_id: int, body: EvidenceScoreIn):
+    """Stateless — scores the given answer_text against this element's sub-question, but neither
+    the answer text nor the score is persisted. The answer only becomes durable once composed
+    into the real draft and saved as a version, same as the rest of Response Builder."""
+    with db_session() as conn:
+        element = conn.execute("SELECT * FROM elements WHERE id = ?", (element_id,)).fetchone()
+        if element is None:
+            raise HTTPException(status_code=404, detail="Element not found")
+        question = conn.execute("SELECT tender_id FROM questions WHERE id = ?", (element["question_id"],)).fetchone()
+
+    return score_sub_answer_evidence(
+        sub_question_text=element["value_text"],
+        elaboration=element["elaboration"] or "",
+        answer_text=body.answer_text,
+        tender_id=question["tender_id"],
+    )

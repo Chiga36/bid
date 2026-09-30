@@ -96,6 +96,17 @@ def delete_chunks(chunk_ids: List[str]) -> None:
     collection.delete(ids=chunk_ids)
 
 
+def delete_tender_evidence(tender_id: int) -> None:
+    """Removes every vector belonging to one tender — both doc_types (evidence and
+    tender_requirement) — used when a tender itself is deleted. Filters by metadata rather than
+    needing stored chunk ids, since per-tender evidence/tender-requirement uploads never persist
+    their generated chunk ids in the relational DB (unlike global_evidence_chunks)."""
+    collection = _get_collection()
+    if collection.count() == 0:
+        return
+    collection.delete(where={"tender_id": tender_id})
+
+
 def add_tender_requirements(tender_id: int, chunk_ids: List[str], chunk_texts: List[str], source_document: str) -> None:
     _add(tender_id, chunk_ids, chunk_texts, source_document, doc_type="tender_requirement")
 

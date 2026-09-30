@@ -49,21 +49,25 @@ continuous-improvement claims.
 
 Provide:
 - theme_fit: does this question genuinely fit the Delivery Methodology theme, and why.
-- evaluator_summary: a concise summary including your method assessment, mobilisation and
-  sequencing, written as an evaluator would.
+- evaluator_summary: 2-4 brief bullet points covering your method assessment, mobilisation and
+  sequencing, written as an evaluator would — not a paragraph.
 - strengths: the strongest delivery features.
 - gaps: for EACH sub-question listed above that has a genuine gap — missing delivery mechanics,
   ambiguity, or scoring risk — return one entry with: sub_question (copied exactly from the
   numbered list above), answer_excerpt (a verbatim quote from the draft response above that
   addresses, or attempts to address, that sub-question — copy it character-for-character; use an
   empty string if the draft does not address that sub-question at all), and gap (what's missing
-  or weak, in evaluator voice, and why it matters). Only include a sub-question if there is a
-  genuine gap — do not manufacture one for every sub-question. If no sub-questions were provided
-  above, return at most one entry using the full question as sub_question.
+  or weak, in evaluator voice, and why it matters — one brief sentence). Only include a
+  sub-question if there is a genuine gap — do not manufacture one for every sub-question. If no
+  sub-questions were provided above, return at most one entry using the full question as
+  sub_question.
 - prioritised_improvements: each with a priority (Critical/High/Medium/Low) and description.
 - suggested_wording: replacement wording for the three biggest weaknesses, in practical,
   executable language.
 - evidence_required: evidence still needed that isn't already available above.
-- improved_answer_plan: an improved structure for the answer.
+- improved_answer_plan: 2-4 brief bullet points for an improved structure for the answer — not a
+  paragraph.
+- Keep every evaluator_summary and improved_answer_plan bullet short (under ~20 words) — a
+  scannable list of points, not a list of mini-paragraphs.
 - Scores from 1 to 5 for compliance, practicality, evidence, client specificity and evaluator
   confidence.

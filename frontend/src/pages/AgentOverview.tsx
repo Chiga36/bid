@@ -33,6 +33,13 @@ const AGENTS: AgentInfo[] = [
     promptFiles: [{ label: "Decomposition", filename: "decomposition_extract_v1.txt" }],
   },
   {
+    name: "Evidence Score",
+    what: "Scores how well one sub-question's own answer is grounded in genuine evidence, out of 5.",
+    how: "A lightweight, single-purpose check against just that sub-answer's text — not the full draft — citing only this tender's retrieved evidence.",
+    expected: "A sub-question's answer text, written in Response Builder before it's composed into the draft.",
+    promptFiles: [{ label: "Evidence Score", filename: "evidence_score_v1.txt" }],
+  },
+  {
     name: "Completeness",
     what: "Checks whether a draft actually addresses each locked sub-question.",
     how: "A closed-book model check per sub-question; every quoted excerpt is verified against the real draft text.",

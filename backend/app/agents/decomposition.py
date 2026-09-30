@@ -59,7 +59,7 @@ class ElementCandidate:
     source_quote: Optional[str]
     extraction_method: str  # "rule" | "llm"
     elaboration: Optional[str] = None
-    answer_guidance: Optional[str] = None
+    answer_guidance: Optional[List[str]] = None
     evidence_suggestion: Optional[str] = None
 
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { createTender } from "../api/tenders";
+import { createTender, deleteTender } from "../api/tenders";
 import type { Tender } from "../api/types";
 import WebThreads from "../components/WebThreads";
 import { useTender } from "../context/TenderContext";
@@ -9,6 +9,8 @@ import { useTender } from "../context/TenderContext";
 export default function Home() {
   const { tenders, selectTender, refreshTenders } = useTender();
   const navigate = useNavigate();
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   async function handleCreated(id: number) {
     // New Tender -> straight to Data Ingestion, not Response Builder: there's nothing to draft
@@ -22,6 +24,20 @@ export default function Home() {
   function handleSelect(id: number) {
     selectTender(id);
     navigate("/builder");
+  }
+
+  // Irreversible — deletes every question/draft/evidence/agent-run for this tender, so a plain
+  // click can't trigger it. "Delete" arms a confirm state on that same tile; a second click
+  // ("Confirm delete") within it is the actual destructive action.
+  async function handleDelete(id: number) {
+    setDeletingId(id);
+    try {
+      await deleteTender(id);
+      await refreshTenders();
+    } finally {
+      setDeletingId(null);
+      setConfirmingDeleteId(null);
+    }
   }
 
   return (
@@ -74,7 +90,16 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <NewAccountTile onCreated={handleCreated} />
             {tenders.map((t) => (
-              <AccountTile key={t.id} tender={t} onClick={() => handleSelect(t.id)} />
+              <AccountTile
+                key={t.id}
+                tender={t}
+                onClick={() => handleSelect(t.id)}
+                confirmingDelete={confirmingDeleteId === t.id}
+                deleting={deletingId === t.id}
+                onRequestDelete={() => setConfirmingDeleteId(t.id)}
+                onCancelDelete={() => setConfirmingDeleteId(null)}
+                onConfirmDelete={() => handleDelete(t.id)}
+              />
             ))}
           </div>
         </div>
@@ -83,18 +108,58 @@ export default function Home() {
   );
 }
 
-function AccountTile({ tender, onClick }: { tender: Tender; onClick: () => void }) {
+function AccountTile({
+  tender,
+  onClick,
+  confirmingDelete,
+  deleting,
+  onRequestDelete,
+  onCancelDelete,
+  onConfirmDelete,
+}: {
+  tender: Tender;
+  onClick: () => void;
+  confirmingDelete: boolean;
+  deleting: boolean;
+  onRequestDelete: () => void;
+  onCancelDelete: () => void;
+  onConfirmDelete: () => void;
+}) {
   return (
-    <button
-      onClick={onClick}
-      className="flex flex-col gap-2 rounded-xl border border-white/20 bg-white/5 p-4 text-left backdrop-blur-sm transition-colors hover:border-white/40 hover:bg-white/10"
-    >
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white">
-        <FolderIcon className="h-4 w-4" />
-      </span>
-      <span className="mt-1 truncate text-sm font-semibold text-white">{tender.competition_name}</span>
-      <span className="truncate text-xs text-blue-100/80">{tender.purchasing_authority ?? tender.contract_reference ?? "—"}</span>
-    </button>
+    <div className="group relative flex flex-col gap-2 rounded-xl border border-white/20 bg-white/5 p-4 backdrop-blur-sm transition-colors hover:border-white/40 hover:bg-white/10">
+      <button onClick={onClick} className="flex flex-col gap-2 text-left" disabled={confirmingDelete}>
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white">
+          <FolderIcon className="h-4 w-4" />
+        </span>
+        <span className="mt-1 truncate text-sm font-semibold text-white">{tender.competition_name}</span>
+        <span className="truncate text-xs text-blue-100/80">{tender.purchasing_authority ?? tender.contract_reference ?? "—"}</span>
+      </button>
+
+      {confirmingDelete ? (
+        <div className="flex items-center gap-2 border-t border-white/10 pt-2">
+          <span className="flex-1 text-[11px] text-rose-200">Delete permanently?</span>
+          <button
+            onClick={onConfirmDelete}
+            disabled={deleting}
+            className="rounded-md bg-rose-500 px-2 py-1 text-[11px] font-medium text-white hover:bg-rose-600 disabled:opacity-50"
+          >
+            {deleting ? "Deleting..." : "Confirm delete"}
+          </button>
+          <button onClick={onCancelDelete} disabled={deleting} className="text-[11px] text-blue-100 hover:text-white">
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={onRequestDelete}
+          title="Delete tender"
+          aria-label={`Delete ${tender.competition_name}`}
+          className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-blue-100/60 opacity-0 transition-opacity hover:bg-white/10 hover:text-rose-300 group-hover:opacity-100"
+        >
+          <TrashIcon className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -173,6 +238,16 @@ function FolderIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M3.5 6.5a1 1 0 011-1h5l2 2h8a1 1 0 011 1v9a1 1 0 01-1 1h-15a1 1 0 01-1-1v-11z" />
+    </svg>
+  );
+}
+
+function TrashIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M4 6.5h16" />
+      <path d="M8.5 6.5V5a1.5 1.5 0 011.5-1.5h4A1.5 1.5 0 0115.5 5v1.5" />
+      <path d="M6.5 6.5l1 13.5a1.5 1.5 0 001.5 1.5h6a1.5 1.5 0 001.5-1.5l1-13.5" />
     </svg>
   );
 }

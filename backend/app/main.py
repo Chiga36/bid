@@ -31,10 +31,21 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    # Any localhost/127.0.0.1 port, not a hardcoded 5173 — Vite auto-increments to 5174, 5175...
-    # whenever something else already holds the default port, and a hardcoded allow_origins list
-    # makes every request fail with a hard 400 the moment that happens, not just a warning.
-    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1):\d+$",
+    # Any port on localhost/127.0.0.1 or a private LAN IP, not a hardcoded host:port — Vite
+    # auto-increments past 5173 when it's taken, and the frontend's own API base URL now derives
+    # from window.location.hostname (see frontend/src/api/http.ts) so it works when opened from
+    # another device's LAN IP too. A hardcoded allow_origins list would make every request fail
+    # the moment either of those varies, not just warn. Still scoped to private/local ranges
+    # only (localhost, 127.0.0.0/8, 10.0.0.0/8, 172.16-31.0.0/12, 192.168.0.0/16) — never a
+    # public origin.
+    allow_origin_regex=(
+        r"^http://(localhost"
+        r"|127\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+        r"|10\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+        r"|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}"
+        r"|192\.168\.\d{1,3}\.\d{1,3}"
+        r"):\d+$"
+    ),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -43,7 +54,7 @@ app.add_middleware(
 def _parse_size_to_bytes(size_str: str) -> int:
     match = re.match(r"^\s*(\d+)\s*([kKmMgG]?[bB])?\s*$", size_str)
     if not match:
-        return 10 * 1024 * 1024  # sensible default if the env var is malformed
+        return 50 * 1024 * 1024  # sensible default if the env var is malformed
     value = int(match.group(1))
     unit = (match.group(2) or "b").lower()
     multiplier = {"b": 1, "kb": 1024, "mb": 1024**2, "gb": 1024**3}.get(unit, 1)

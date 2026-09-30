@@ -5,11 +5,13 @@ AI/ML) and then runs the real Ingestion agent (app/agents/ingestion.py) over its
 identify questions — use POST /questions to add or fix entries by hand if a document still
 doesn't split as expected.
 """
+import shutil
 from pathlib import Path
 from typing import List
 
 from fastapi import APIRouter, HTTPException, UploadFile
 
+from app import vector_store
 from app.agents.ingestion import extract_questions
 from app.config import settings
 from app.db import db_session
@@ -62,6 +64,70 @@ def get_tender(tender_id: int):
     if row is None:
         raise HTTPException(status_code=404, detail="Tender not found")
     return dict(row)
+
+
+@router.delete("/tenders/{tender_id}")
+def delete_tender(tender_id: int):
+    """Hard delete — irreversible, cascades through every table that (directly or transitively)
+    references this tender, in FK-safe order (deepest children first), then removes this
+    tender's Chroma vectors and on-disk uploaded files. The global evidence library is untouched
+    — it was never tied to any tender in the first place."""
+    with db_session() as conn:
+        tender = conn.execute("SELECT id FROM tenders WHERE id = ?", (tender_id,)).fetchone()
+        if tender is None:
+            raise HTTPException(status_code=404, detail="Tender not found")
+
+        draft_subquery = "SELECT id FROM drafts WHERE question_id IN (SELECT id FROM questions WHERE tender_id = ?)"
+        question_subquery = "SELECT id FROM questions WHERE tender_id = ?"
+
+        # 1. Tables scoped by draft_id (any order relative to each other, all before `drafts`).
+        for table in (
+            "completeness_results",
+            "recommendations",
+            "theme_reviews",
+            "deterministic_check_results",
+            "scoring_runs",
+            "scoring_summary",
+        ):
+            conn.execute(f"DELETE FROM {table} WHERE draft_id IN ({draft_subquery})", (tender_id,))
+
+        # 2. `drafts` (now safe — its own children are gone) and `elements` (now safe —
+        #    completeness_results/recommendations, the only tables referencing element_id, are gone).
+        conn.execute(f"DELETE FROM drafts WHERE question_id IN ({question_subquery})", (tender_id,))
+        conn.execute(f"DELETE FROM elements WHERE question_id IN ({question_subquery})", (tender_id,))
+
+        # 3. benchmark_results before benchmark_cases (references benchmark_case_id).
+        conn.execute(
+            "DELETE FROM benchmark_results WHERE benchmark_case_id IN (SELECT id FROM benchmark_cases WHERE tender_id = ?)",
+            (tender_id,),
+        )
+        conn.execute("DELETE FROM benchmark_cases WHERE tender_id = ?", (tender_id,))
+        conn.execute("DELETE FROM clarifications WHERE tender_id = ?", (tender_id,))
+
+        # 4. `questions` (now safe — elements/drafts/benchmark_cases/clarifications are gone),
+        #    then every other table with a plain tender_id FK, then `tenders` itself last.
+        conn.execute("DELETE FROM questions WHERE tender_id = ?", (tender_id,))
+        for table in (
+            "documents",
+            "scoring_bands",
+            "prompt_overrides",
+            "business_rules",
+            "evaluation_methodology",
+            "evidence_chunks",
+            "tender_requirements",
+            "procurement_stages",
+            "kyc_insights",
+        ):
+            conn.execute(f"DELETE FROM {table} WHERE tender_id = ?", (tender_id,))
+        conn.execute("DELETE FROM tenders WHERE id = ?", (tender_id,))
+
+    vector_store.delete_tender_evidence(tender_id)
+
+    tender_dir = settings.data_dir / "tenders" / str(tender_id)
+    if tender_dir.exists():
+        shutil.rmtree(tender_dir, ignore_errors=True)
+
+    return {"tender_id": tender_id, "deleted": True}
 
 
 @router.post("/tenders/{tender_id}/scoring-bands")

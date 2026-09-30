@@ -15,7 +15,7 @@ def test_verbatim_sub_question_is_kept_with_elaboration_and_guidance_intact(monk
                 SubQuestionExtraction(
                     text="describe your approach to risk management",
                     elaboration="The evaluator wants a named, tender-relevant risk methodology.",
-                    answer_guidance="Open with the top risk, state likelihood/impact, name the mitigation and owner.",
+                    answer_guidance=["Named the top risk and quantified likelihood/impact", "Named the mitigation and its owner"],
                     evidence_suggestion="Reference the Acme Council case study above, which demonstrates this risk methodology.",
                 )
             ],
@@ -31,7 +31,7 @@ def test_verbatim_sub_question_is_kept_with_elaboration_and_guidance_intact(monk
     assert len(sub_questions) == 1
     assert sub_questions[0].value_text == "describe your approach to risk management"
     assert sub_questions[0].elaboration == "The evaluator wants a named, tender-relevant risk methodology."
-    assert sub_questions[0].answer_guidance.startswith("Open with the top risk")
+    assert sub_questions[0].answer_guidance[0].startswith("Named the top risk")
     assert sub_questions[0].evidence_suggestion.startswith("Reference the Acme Council case study")
 
 
@@ -43,7 +43,7 @@ def test_non_verbatim_sub_question_is_dropped_entirely(monkeypatch):
                 SubQuestionExtraction(
                     text="This sentence was never in the source question at all.",
                     elaboration="Some elaboration that should never reach the DB.",
-                    answer_guidance="Some guidance that should never reach the DB.",
+                    answer_guidance=["Some guidance that should never reach the DB."],
                     evidence_suggestion="Some evidence pointer that should never reach the DB.",
                 )
             ],

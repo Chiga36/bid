@@ -9,13 +9,14 @@ import {
   runScoring,
   runThemeReview,
 } from "../api/drafts";
-import { createDraft, decomposeQuestion, getElements, listDrafts, lockRegister } from "../api/questions";
+import { createDraft, decomposeQuestion, getElements, listDrafts, lockRegister, scoreElementEvidence } from "../api/questions";
 import { listQuestions } from "../api/tenders";
 import type {
   CompletenessResult,
   DeterministicCheckResult,
   Draft,
   ElementRow,
+  EvidenceScoreResult,
   GateResult,
   Question,
   RecommendationItem,
@@ -37,6 +38,14 @@ export default function ResponseBuilder() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [selectedDraftId, setSelectedDraftId] = useState<number | null>(null);
   const [editorText, setEditorText] = useState("");
+
+  // Per-sub-question scratch work — keyed by element_id, which is globally unique, so switching
+  // questions and back naturally keeps each question's own answers without needing an explicit
+  // reset. Never persisted anywhere on its own; it only becomes durable once "Compose into draft"
+  // folds it into editorText and that's saved as a real version, same as the rest of this page.
+  const [answersByElement, setAnswersByElement] = useState<Record<number, string>>({});
+  const [elementScores, setElementScores] = useState<Record<number, EvidenceScoreResult>>({});
+  const [checkingElementId, setCheckingElementId] = useState<number | null>(null);
 
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [completeness, setCompleteness] = useState<CompletenessResult[] | null>(null);
@@ -164,6 +173,37 @@ export default function ResponseBuilder() {
     resetCoachResults();
   }
 
+  function handleAnswerChange(elementId: number, text: string) {
+    setAnswersByElement((prev) => ({ ...prev, [elementId]: text }));
+  }
+
+  async function handleCheckEvidence(el: ElementRow) {
+    const answerText = (answersByElement[el.id] ?? "").trim();
+    if (!answerText) return;
+    setCheckingElementId(el.id);
+    setActionError(null);
+    try {
+      const result = await scoreElementEvidence(el.id, answerText);
+      setElementScores((prev) => ({ ...prev, [el.id]: result }));
+    } catch (err) {
+      reportActionError(err);
+    } finally {
+      setCheckingElementId(null);
+    }
+  }
+
+  // Always available regardless of how many boxes are filled — empty ones just contribute
+  // nothing, same as the main draft box itself has never required anything in particular.
+  // Overwrites editorText, same as selecting a different version already does; the main draft box
+  // stays freely editable afterward for final polish before Save.
+  function handleComposeIntoDraft() {
+    const composed = subQuestionElements
+      .map((el) => (answersByElement[el.id] ?? "").trim())
+      .filter((text) => text.length > 0)
+      .join("\n\n");
+    setEditorText(composed);
+  }
+
   async function handleCheckCompleteness() {
     if (!selectedDraftId) return;
     await withBusy("completeness", async () => setCompleteness(await runCompleteness(selectedDraftId)));
@@ -284,34 +324,78 @@ export default function ResponseBuilder() {
 
             {subQuestionElements.length > 0 && (
               <div className="flex flex-col gap-2">
-                {subQuestionElements.map((el, i) => (
-                  <div key={el.id} className="rounded-md border border-slate-200 bg-white p-2 text-xs">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-medium text-slate-800">
-                        Sub-question {i + 1}: <span className="font-normal">{el.value_text}</span>
-                      </p>
-                      {el.locked && <StatusPill status="ready" label="locked" />}
+                {subQuestionElements.map((el, i) => {
+                  const answerText = answersByElement[el.id] ?? "";
+                  const score = elementScores[el.id];
+                  const checking = checkingElementId === el.id;
+                  return (
+                    <div key={el.id} className="rounded-md border border-slate-200 bg-white p-2 text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-medium text-slate-800">
+                          Sub-question {i + 1}: <span className="font-normal">{el.value_text}</span>
+                        </p>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          {score && (
+                            <span
+                              title={score.rationale}
+                              className="flex items-center gap-1 rounded-full bg-brand-50 px-1.5 py-0.5 font-semibold text-brand-700"
+                            >
+                              Evidence <ScoreDots value={score.score} /> {score.score}/5
+                            </span>
+                          )}
+                          {el.locked && <StatusPill status="ready" label="locked" />}
+                        </div>
+                      </div>
+                      {el.elaboration && (
+                        <p className="mt-1 pl-3 text-slate-600">
+                          <span className="font-medium text-slate-500">What this is asking: </span>
+                          {el.elaboration}
+                        </p>
+                      )}
+                      {el.answer_guidance && el.answer_guidance.length > 0 && (
+                        <div className="mt-1 pl-3 text-slate-600">
+                          <span className="font-medium text-slate-500">Suggested structure: </span>
+                          <ul className="mt-0.5 list-disc space-y-0.5 pl-4">
+                            {el.answer_guidance.map((point, j) => (
+                              <li key={j}>{point}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {el.evidence_suggestion && (
+                        <p className="mt-1 pl-3 text-slate-600">
+                          <span className="font-medium text-slate-500">Evidence to draw on: </span>
+                          {el.evidence_suggestion}
+                        </p>
+                      )}
+
+                      <textarea
+                        className="mt-2 min-h-[70px] w-full rounded-md border border-slate-300 p-2 text-xs"
+                        placeholder="Write your answer to this sub-question here, including evidence..."
+                        value={answerText}
+                        onChange={(e) => handleAnswerChange(el.id, e.target.value)}
+                      />
+                      <div className="mt-1.5 flex items-center justify-between">
+                        <button
+                          onClick={() => handleCheckEvidence(el)}
+                          disabled={checking || !answerText.trim()}
+                          className="flex items-center gap-1.5 rounded-md border border-slate-300 px-2 py-1 font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {checking && <Spinner />}
+                          {checking ? "Checking..." : "Check evidence"}
+                        </button>
+                        {score && <span className="text-slate-400">{score.rationale}</span>}
+                      </div>
                     </div>
-                    {el.elaboration && (
-                      <p className="mt-1 pl-3 text-slate-600">
-                        <span className="font-medium text-slate-500">What this is asking: </span>
-                        {el.elaboration}
-                      </p>
-                    )}
-                    {el.answer_guidance && (
-                      <p className="mt-1 pl-3 text-slate-600">
-                        <span className="font-medium text-slate-500">Suggested structure: </span>
-                        {el.answer_guidance}
-                      </p>
-                    )}
-                    {el.evidence_suggestion && (
-                      <p className="mt-1 pl-3 text-slate-600">
-                        <span className="font-medium text-slate-500">Evidence to draw on: </span>
-                        {el.evidence_suggestion}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
+
+                <button
+                  onClick={handleComposeIntoDraft}
+                  className="self-start rounded-md border border-brand-300 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50"
+                >
+                  Compose into draft ↓
+                </button>
               </div>
             )}
 
@@ -449,7 +533,13 @@ function ThemeReviewPanel({
         )}
       </div>
 
-      <p className="text-slate-600">{review.evaluator_summary}</p>
+      {review.evaluator_summary.length > 0 && (
+        <ul className="list-disc space-y-0.5 pl-4 text-slate-600">
+          {review.evaluator_summary.map((point, i) => (
+            <li key={i}>{point}</li>
+          ))}
+        </ul>
+      )}
 
       <div className="flex flex-col gap-1 rounded-md border border-slate-100 p-2">
         <ScoreRow label="Compliance" value={review.score_compliance} />
@@ -541,10 +631,16 @@ function ThemeReviewPanel({
         </div>
       )}
 
-      <div>
-        <p className="font-semibold text-slate-700">Improved answer plan</p>
-        <p className="mt-1 text-slate-600">{review.improved_answer_plan}</p>
-      </div>
+      {review.improved_answer_plan.length > 0 && (
+        <div>
+          <p className="font-semibold text-slate-700">Improved answer plan</p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-4 text-slate-600">
+            {review.improved_answer_plan.map((point, i) => (
+              <li key={i}>{point}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

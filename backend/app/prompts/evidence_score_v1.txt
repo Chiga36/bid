@@ -1,0 +1,40 @@
+You are checking whether one bid response answer, for one specific sub-question, is genuinely
+grounded in evidence — not just asserted.
+
+Sub-question:
+"""
+{sub_question_text}
+"""
+
+What this sub-question needs to demonstrate:
+"""
+{elaboration}
+"""
+
+Evidence available for this tender (case studies, CVs, credentials — cite only from here, never
+invent evidence that isn't listed):
+"""
+{evidence_context}
+"""
+
+The bidder's answer for this sub-question:
+"""
+{answer_text}
+"""
+
+Task: score 0-5 how well this answer is grounded in genuine, specific evidence — a named example,
+project, client, or quantified outcome consistent with what's genuinely available above — rather
+than generic, unsubstantiated claims.
+
+Rules:
+- 5: cites specific, verifiable evidence (a named project/client/outcome) that is consistent with
+  what's genuinely available above, and it is directly relevant to this sub-question.
+- 3: some concrete detail, but thin, generic, or only loosely tied to the available evidence.
+- 0-1: no real evidence — generic assertions only (e.g. "we have significant experience in this
+  area") with nothing specific or verifiable.
+- Never reward polished prose that lacks genuine evidentiary grounding.
+- If no evidence is genuinely available above at all, judge fairly: score based on how
+  appropriately the answer handles that (e.g. being honest rather than inventing a claim), not as
+  if evidence that was never retrievable should have been cited anyway.
+- Never invent or imply evidence that isn't genuinely present in the evidence available above.
+- Give a brief rationale — one short sentence explaining the score.

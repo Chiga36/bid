@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiUpload } from "./http";
+import { apiDelete, apiGet, apiPost, apiUpload } from "./http";
 import type { Clarification, EvidenceChunk, KYCInsight, ProcurementStage, Question, ScoringBand, Tender } from "./types";
 
 export function listTenders() {
@@ -16,6 +16,10 @@ export function createTender(input: {
 
 export function getTender(tenderId: number) {
   return apiGet<Tender>(`/tenders/${tenderId}`);
+}
+
+export function deleteTender(tenderId: number) {
+  return apiDelete<{ tender_id: number; deleted: boolean }>(`/tenders/${tenderId}`);
 }
 
 export function getScoringBands(tenderId: number) {

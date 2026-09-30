@@ -9,13 +9,13 @@ from app.models import GapEntry, PrioritisedImprovement, Theme, ThemeReviewResul
 def _fake_result(gaps):
     return ThemeReviewResult(
         theme_fit="Fits.",
-        evaluator_summary="Summary.",
+        evaluator_summary=["Summary."],
         strengths=["Strength one."],
         gaps=gaps,
         prioritised_improvements=[PrioritisedImprovement(priority="High", description="Fix it.")],
         suggested_wording=["Try this instead."],
         evidence_required=[],
-        improved_answer_plan="Plan.",
+        improved_answer_plan=["Plan."],
         score_compliance=3,
         score_practicality=3,
         score_evidence=3,

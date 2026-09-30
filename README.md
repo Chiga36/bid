@@ -37,18 +37,21 @@ Builder exposes the *real* agents (Decompose, Lock, Deterministic checks, Comple
 Recommendation, Gate, Expert theme review) rather than the reference mockup's original button
 labels, which didn't all correspond to something the backend does; and Agent Skills is read-only (it shows the live
 content of `app/prompts/*.txt`), since prompts aren't DB-backed or editable via the API in this
-build. On Data Ingestion, two of the six upload categories are mandatory — **Questionnaire**
+build. On Data Ingestion, two of the seven upload categories are mandatory — **Questionnaire**
 (the Award Questionnaire spreadsheet; this is the same category key as the earlier "Competition
-Info", just relabelled) and **Strategy and Context** (the competition tender instructions
-document) — "Execute Ingestion Agent" stays disabled until both have at least one file, enforced
-again server-side (`POST /questions/{id}/decompose` 400s if no tender-requirements register
-exists yet). The other four categories stay fully optional.
+Info", just relabelled) and **Strategy** (the competition tender instructions document) —
+"Execute Ingestion Agent" stays disabled until both have at least one file, enforced again
+server-side (`POST /questions/{id}/decompose` 400s if no tender-requirements register exists
+yet). The other five categories stay fully optional.
 
-**Strategy and Context used to be one combined mandatory upload; they're now two separate ones**
-(`strategy` and `context`) so Know Your Client can read the client-background document without
-ever mixing it with the tender instructions document that Methodology/Tender Requirements/Scoring
-Matrix/Procurement Timeline read (see `routers/evidence.py`'s `_STRATEGY_CATEGORY` /
-`_CONTEXT_CATEGORY` gates). Data Ingestion now has three mandatory categories, not two.
+**Strategy and Context used to be one combined mandatory upload; they're now two separate
+categories** (`strategy` and `context`) so Know Your Client can read the client-background
+document without ever mixing it with the tender instructions document that Methodology/Tender
+Requirements/Scoring Matrix/Procurement Timeline read (see `routers/evidence.py`'s
+`_STRATEGY_CATEGORY` / `_CONTEXT_CATEGORY` gates). Context itself is optional, not mandatory —
+PPT files uploaded there were taking a very long time to render once deployed to App Service, so
+it was moved out of the mandatory set; a tender can be ingested without it, and Know Your Client
+simply has nothing to show until one is uploaded.
 
 ## What's here / what isn't
 
@@ -104,8 +107,14 @@ If `pip install` times out partway through on a slow connection, retry with a lo
 ## Run
 
 ```
-uvicorn app.main:app --reload --host 127.0.0.1 --port 5000
+uvicorn app.main:app --reload --reload-dir app --host 127.0.0.1 --port 5000
 ```
+
+`--reload-dir app` restricts the auto-reload file watcher to the `app/` package. Without it,
+uvicorn/watchfiles watches the entire backend folder, including `.venv/` — so `pip install`s and
+even the venv's own housekeeping trigger a spurious "detected changes... Reloading" and restart
+the server mid-work. This has no effect on what your own edits pick up; every `app/` file still
+reloads live.
 
 Open `http://127.0.0.1:5000/docs` — that's the whole test harness for this project, no separate
 client needed. **Stop the server (Ctrl+C, or kill the process) before copying, zipping, or moving

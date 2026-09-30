@@ -64,11 +64,13 @@ For each sub-question, provide:
   risks and mitigations, not a generic risk-management policy statement). Use the background
   context above to make this specific to this client/tender where it genuinely helps; never assert
   a tender-specific fact that isn't actually present in that context.
-- "answer_guidance": a concrete, practical suggestion for how to structure the answer to this
-  specific sub-question — e.g. "open with the named risk, quantify its likelihood/impact, state
-  the specific mitigation and who owns it, close with how this reduces impact on the client's
-  outcomes." Make it actionable and specific to this sub-question, not generic bid-writing advice
-  that could apply to any question.
+- "answer_guidance": 2-3 brief bullet points, each written in PAST TENSE as if describing what a
+  strong answer already did — not present-tense instructions. Frame each bullet as a retrospective
+  fact ("Named the specific risk and quantified its likelihood/impact", "Stated the mitigation put
+  in place and who owned it", "Explained how this reduced impact on the client's outcomes"), not an
+  imperative ("open with...", "state..."). Each bullet should be short (under 15 words) and
+  specific to this sub-question, not generic bid-writing advice that could apply to any question.
+  Return 2-3 bullets, never a single paragraph.
 - "evidence_suggestion": what evidence from the evidence-library background above should be drawn
   on to answer this specific sub-question — e.g. "reference the [named project/client from the
   evidence above] example, which demonstrates this exact capability" or "the CV/credential above

@@ -104,7 +104,7 @@ export default function FileDropzone({ index, title, description, files, onFiles
           <p className="mt-2 text-sm text-slate-600">Drag &amp; drop your file here</p>
           <p className="text-xs font-medium text-brand-600">or click to browse</p>
           <p className="mt-1 text-[11px] text-slate-400">
-            Supported formats: PDF, DOCX, XLSX, PPTX (Max 10MB){required ? "" : " — optional"}
+            Supported formats: PDF, DOCX, XLSX, PPTX (Max 50MB){required ? "" : " — optional"}
           </p>
           <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
         </div>
