@@ -1,7 +1,7 @@
 """Lightweight, deterministic file reading — replaces Docling entirely.
 
-This is deliberately NOT an AI/ML pipeline: python-docx, openpyxl, and pypdf just unzip and read
-a structured file's own text, the same category of operation as json.load(). No model weights,
+This is deliberately NOT an AI/ML pipeline: python-docx, openpyxl, python-pptx, and pypdf just
+unzip and read a structured file's own text, the same category of operation as json.load(). No model weights,
 no OCR, no layout detection, no network calls, no downloaded artifacts. All of the *understanding*
 (what's a question, what's noise, what category something belongs to) happens later, in
 app/agents/ingestion.py, via a real LLM call — this module's only job is getting clean text and
@@ -19,6 +19,7 @@ from typing import List
 
 import openpyxl
 from docx import Document as DocxDocument
+from pptx import Presentation
 from pypdf import PdfReader
 
 
@@ -93,10 +94,37 @@ def _read_pdf(path: Path) -> RawDocument:
     return RawDocument(full_text="\n\n".join(paragraphs), paragraphs=paragraphs, tables=[])
 
 
+def _read_pptx(path: Path) -> RawDocument:
+    prs = Presentation(str(path))
+
+    full_text_lines: List[str] = []
+    paragraphs: List[str] = []
+    tables: List[RawTable] = []
+
+    for i, slide in enumerate(prs.slides, start=1):
+        full_text_lines.append(f"## Slide {i}")
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                text = shape.text_frame.text.strip()
+                if text:
+                    paragraphs.append(text)
+                    full_text_lines.append(text)
+            if shape.has_table:
+                rows = [[cell.text.strip() for cell in row.cells] for row in shape.table.rows]
+                if rows:
+                    tables.append(RawTable(rows=rows))
+                    serialized = "\n".join(" | ".join(r) for r in rows)
+                    paragraphs.append(serialized)
+                    full_text_lines.append(serialized)
+
+    return RawDocument(full_text="\n\n".join(full_text_lines), paragraphs=paragraphs, tables=tables)
+
+
 _READERS = {
     ".docx": _read_docx,
     ".xlsx": _read_xlsx,
     ".pdf": _read_pdf,
+    ".pptx": _read_pptx,
 }
 
 
