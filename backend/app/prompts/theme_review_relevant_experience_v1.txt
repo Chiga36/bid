@@ -64,5 +64,58 @@ Provide:
   paragraph.
 - Keep every evaluator_summary and improved_answer_plan bullet short (under ~20 words) — a
   scannable list of points, not a list of mini-paragraphs.
-- Scores from 1 to 5 for compliance, practicality, evidence, client specificity and evaluator
-  confidence.
+- Score each of the five dimensions below from 0 to 5. 0 is a genuine, distinct level — not
+  addressed / no mechanism / no evidence / generic / actively raises doubt — not just "the lowest
+  possible 1". Use the full range; do not default to the middle.
+
+  score_compliance — does the response address the question and the tender's stated requirements?
+  0: Off-topic, blank, or fundamentally non-responsive.
+  1: Addresses only a small fragment of what was asked; most requirements ignored.
+  2: Partially addresses it; several explicit requirements or sub-questions are missing.
+  3: Addresses the main elements and most requirements, with at least one explicit gap.
+  4: Fully addresses the question and all explicit requirements, only minor omissions.
+  5: Fully and precisely addresses every explicit and implicit requirement — nothing to mark down.
+
+  score_practicality — is the proposed approach realistic, operational and deliverable as described?
+  0: No approach described, or it is nonsensical / operationally impossible.
+  1: Purely aspirational ("we will ensure best practice") with no mechanism or sequencing.
+  2: Some mechanism described, but generic, unsequenced, or missing obvious operational detail.
+  3: A workable approach with reasonable mechanism and sequencing, but lacking ownership or
+     contingency detail an evaluator would want to see executed.
+  4: Clearly deliverable — named mechanisms, sequencing, ownership, resourcing; minor gaps only.
+  5: Fully operational and realistic — owners, sequencing, resourcing, dependencies and
+     contingencies all addressed — reads as executable exactly as written.
+
+  score_evidence — is the response backed by specific, quantified, past-tense proof of delivery?
+  0: No evidence of any kind — pure assertion, no example, data, or reference to prior work.
+  1: Vague reference to "experience" or "track record" with no named example, date, or outcome.
+  2: Names a past project/client but gives no quantified or verifiable outcome — a claim, not proof.
+  3: Cites a specific past example with one concrete detail (a date, number, named deliverable),
+     but its relevance to this sub-question is thin.
+  4: Cites a specific, directly relevant past example with a quantified outcome, in past tense.
+  5: Multiple directly relevant, specific, quantified past examples in definite past tense, each
+     clearly tied to what's being asked — reads as a genuine track record, not a promise.
+
+  score_client_specificity — is the response tailored to this specific client, or generic boilerplate?
+  0: Entirely generic; could be submitted unchanged to any tender for any client.
+  1: Uses the client's name but is otherwise generic, with no reference to their actual context.
+  2: Some tailoring present (one stated priority or requirement referenced) amid generic content.
+  3: Reasonably tailored — references this client's priorities or evaluation criteria in several
+     places, but a generic core is still visible.
+  4: Clearly written for this client — consistently reflects their priorities and context, with
+     only minor generic passages.
+  5: Thoroughly specific — every major point is anchored to this client's stated priorities,
+     context, or evaluation criteria; could not be mistaken for a response to a different tender.
+
+  score_evaluator_confidence — holistic: how confident would a real evaluator be that this bidder
+  will deliver? (Not an average of the other four — a step back, as the evaluator themself would
+  read it.)
+  0: No confidence — the response actively raises doubt (contradictions, unsupported claims,
+     clear non-compliance).
+  1: Sceptical — thin, generic, or unconvincing on the points that matter most.
+  2: Some doubt — a few strong points, but significant gaps or unresolved risks remain.
+  3: Baseline confidence — credible and competent, but unremarkable against a capable competitor.
+  4: Confident — credible, well-evidenced, and addresses the risks an experienced evaluator would
+     look for.
+  5: Fully assured — clearly deliverable, evidenced, and risk-managed; the kind of answer that
+     would differentiate the bid and justify a top-band score.

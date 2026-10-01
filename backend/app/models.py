@@ -426,11 +426,14 @@ class ThemeReviewResult(BaseModel):
     suggested_wording: List[str]
     evidence_required: List[str]
     improved_answer_plan: List[str] = Field(description="2-4 brief bullet points, not a paragraph")
-    score_compliance: int = Field(ge=1, le=5)
-    score_practicality: int = Field(ge=1, le=5)
-    score_evidence: int = Field(ge=1, le=5)
-    score_client_specificity: int = Field(ge=1, le=5)
-    score_evaluator_confidence: int = Field(ge=1, le=5)
+    # 0-5, not 1-5 — 0 is a genuine, distinct level (not addressed / no mechanism / no evidence /
+    # generic / actively raises doubt), not just "the lowest possible 1". See the shared rubric
+    # block in each theme_review_*_v1.txt prompt for what separates each level on each axis.
+    score_compliance: int = Field(ge=0, le=5, description="Does the response address the question and the tender's stated requirements?")
+    score_practicality: int = Field(ge=0, le=5, description="Is the proposed approach realistic, operational and deliverable as described?")
+    score_evidence: int = Field(ge=0, le=5, description="Is the response backed by specific, quantified, past-tense proof of delivery rather than assertion?")
+    score_client_specificity: int = Field(ge=0, le=5, description="Is the response tailored to this specific client, or generic boilerplate?")
+    score_evaluator_confidence: int = Field(ge=0, le=5, description="Holistic: how confident would a real evaluator be that this bidder will deliver?")
 
 
 class ThemeReviewOut(ThemeReviewResult):
