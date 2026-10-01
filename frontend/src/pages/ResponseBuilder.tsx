@@ -469,7 +469,13 @@ export default function ResponseBuilder() {
           disabled={coachDisabled}
           onClick={handleExpertReview}
         />
-        {themeReview && <ThemeReviewPanel review={themeReview} scoring={scoring} />}
+        {themeReview && (
+          <ThemeReviewPanel
+            review={themeReview}
+            scoring={scoring}
+            subQuestions={subQuestionElements.map((e) => e.value_text)}
+          />
+        )}
 
         <CoachAction
           label="Suggest fixes"
@@ -503,24 +509,48 @@ export default function ResponseBuilder() {
   );
 }
 
-// Capped to 4 named sections (Why this score / Strengths / Prioritised improvements / Suggested
-// wording) — theme_fit, evaluator_summary, the 5 individual dimension scores, gaps, evidence
-// still required, and improved answer plan are deliberately dropped from this view. The agents
-// still compute all of it (nothing changed server-side); this is purely about what a bid writer
-// needs to glance at here, not a reduction in what's assessed. Each list is capped to its top 4
-// items client-side for the same reason.
+// Every section from the full agent output is still shown — only "Why this score", "Strengths",
+// "Prioritised improvements" and "Suggested wording" are capped to their top 4 points client-side
+// (nothing removed from what the agents compute, just how many of each list renders here).
 const MAX_POINTS = 4;
 
-function ThemeReviewPanel({ review, scoring }: { review: ThemeReview; scoring: ScoringSummary | null }) {
+function ThemeReviewPanel({
+  review,
+  scoring,
+  subQuestions,
+}: {
+  review: ThemeReview;
+  scoring: ScoringSummary | null;
+  subQuestions: string[];
+}) {
   return (
     <div className="flex flex-col gap-3 rounded-md border border-slate-200 p-3 text-xs">
       <div className="flex items-start justify-between gap-2">
-        <p className="font-semibold text-slate-800">{review.theme}</p>
+        <div>
+          <p className="font-semibold text-slate-800">{review.theme}</p>
+          <p className="mt-0.5 text-slate-500">{review.theme_fit}</p>
+        </div>
         {scoring && (
           <span className="shrink-0 rounded-full bg-brand-50 px-2 py-1 text-center text-xs font-semibold text-brand-700">
             Band {scoring.final_band}
           </span>
         )}
+      </div>
+
+      {review.evaluator_summary.length > 0 && (
+        <ul className="list-disc space-y-0.5 pl-4 text-slate-600">
+          {review.evaluator_summary.map((point, i) => (
+            <li key={i}>{point}</li>
+          ))}
+        </ul>
+      )}
+
+      <div className="flex flex-col gap-1 rounded-md border border-slate-100 p-2">
+        <ScoreRow label="Compliance" value={review.score_compliance} />
+        <ScoreRow label="Practicality" value={review.score_practicality} />
+        <ScoreRow label="Evidence" value={review.score_evidence} />
+        <ScoreRow label="Client specificity" value={review.score_client_specificity} />
+        <ScoreRow label="Evaluator confidence" value={review.score_evaluator_confidence} />
       </div>
 
       {scoring && (
@@ -538,6 +568,34 @@ function ThemeReviewPanel({ review, scoring }: { review: ThemeReview; scoring: S
               <li key={i}>{s}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {review.gaps.length > 0 && (
+        <div>
+          <p className="font-semibold text-slate-700">Gaps</p>
+          <div className="mt-1 flex flex-col gap-2">
+            {review.gaps.map((g, i) => {
+              const matchedIndex = subQuestions.indexOf(g.sub_question);
+              const number = matchedIndex >= 0 ? matchedIndex + 1 : i + 1;
+              return (
+                <div key={i} className="rounded-md border border-slate-100 bg-slate-50 p-2">
+                  <p>
+                    <span className="font-semibold text-slate-700">Sub-question {number}: </span>
+                    {g.sub_question}
+                  </p>
+                  <p className="mt-0.5">
+                    <span className="font-semibold text-slate-700">Answer {number}: </span>
+                    {g.answer_excerpt ? g.answer_excerpt : <span className="italic text-slate-400">— not addressed —</span>}
+                  </p>
+                  <p className="mt-0.5">
+                    <span className="font-semibold text-slate-700">Gap {number}: </span>
+                    {g.gap}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -565,6 +623,40 @@ function ThemeReviewPanel({ review, scoring }: { review: ThemeReview; scoring: S
           </ul>
         </div>
       )}
+
+      {review.evidence_required.length > 0 && (
+        <div>
+          <p className="font-semibold text-slate-700">Evidence still required</p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-4 text-slate-600">
+            {review.evidence_required.map((e, i) => (
+              <li key={i}>{e}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {review.improved_answer_plan.length > 0 && (
+        <div>
+          <p className="font-semibold text-slate-700">Improved answer plan</p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-4 text-slate-600">
+            {review.improved_answer_plan.map((point, i) => (
+              <li key={i}>{point}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScoreRow({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex items-center justify-between gap-2 py-0.5">
+      <span className="text-slate-500">{label}</span>
+      <span className="flex items-center gap-1.5">
+        <ScoreDots value={value} />
+        <span className="w-6 text-right font-semibold text-slate-800">{value}/5</span>
+      </span>
     </div>
   );
 }
