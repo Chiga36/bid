@@ -1,6 +1,6 @@
-You are checking whether one bid response answer, for one specific sub-question, is written as
-genuine, concrete proof of past delivery — not just a confident-sounding promise. Judge the
-answer's own writing only; you are not checking it against any external source.
+You are checking whether one bid response answer, for one specific sub-question, is WRITTEN as
+concrete proof of past delivery — not just a confident-sounding promise. This is a check of
+writing style and form only.
 
 Sub-question:
 """
@@ -17,28 +17,38 @@ The bidder's answer for this sub-question:
 {answer_text}
 """
 
-Task: score 0-5 how much this answer reads as concrete, provable evidence of past delivery, based
-only on what the answer itself says.
+Task: score 0-5 how much this answer READS AS concrete, specific proof of past delivery, based
+only on its wording and tense.
 
-What counts as strong evidence in the writing itself:
+Critical rule — do NOT judge truthfulness: you have no way to verify whether anything the bidder
+states is real, accurate, or fabricated, and it is not your job to guess. Never lower a score
+because a cited example seems "unverified", "unconfirmed", "fictional", "made up", or because you
+don't personally recognise the named project/client. The bidder is the one who knows whether
+their own example is real — your only job is to judge HOW it is written: does it read with the
+specificity and tense of genuine evidence, or does it read as a vague, generic, future-tense
+promise. Take every factual claim in the answer at face value.
+
+What makes writing read as strong evidence:
 - Named, specific detail: a project, client, contract, or context identified concretely (e.g.
   "on the Riverside contract") rather than vaguely (e.g. "on a similar project").
-- Quantified or measurable outcomes: numbers, percentages, timeframes, concrete results (e.g.
+- Quantified or measurable detail: numbers, percentages, timeframes, concrete results (e.g.
   "reduced onboarding time by 40% within 3 weeks") rather than vague claims (e.g. "significantly
   improved", "very successful").
-- PAST TENSE, describing what was actually done and achieved ("we identified... we delivered...
-  we reduced...") — not FUTURE TENSE promises of what will be done ("we will ensure... we will
-  deliver..."). A future-tense promise, however confident or detailed, can never score above 2 —
-  anyone can promise; only a track record is proof.
-- A stated confirmation or verification of the outcome (e.g. "as confirmed by the client",
-  "verified in the contract's performance report") scores higher than an unverified claim.
+- PAST TENSE, stated as something that was actually done and achieved ("we identified... we
+  delivered... we reduced...") — not FUTURE TENSE or CONDITIONAL phrasing describing what would
+  or could be done ("we will ensure...", "this could be converted into..."). A future-tense or
+  conditional promise, however confident or detailed, can never score above 2 — anyone can
+  promise or hypothesise; only a definite past-tense claim reads as a track record.
 
 Rules:
-- 5: specific, named, quantified, past-tense proof of having actually done this before, with a
-  measurable or verified outcome.
+- 5: specific, named, quantified, definite past-tense claim of having actually done this before,
+  with a measurable outcome stated.
 - 3: some concrete, past-tense detail, but thin, generic, or missing a clear quantified outcome.
-- 0-2: vague, generic, or future-tense — asserts capability or intent without concrete past proof
-  (e.g. "we have extensive experience in this area", "we will deliver a robust approach").
-- Judge only the content of the answer as given. Do not assume, infer, or credit the bidder with
-  facts, experience, or outcomes that the answer text itself doesn't actually state.
-- Give a brief rationale — one short sentence explaining the score.
+- 0-2: vague, generic, future-tense, or conditional — asserts capability or intent without
+  concrete past-tense specifics (e.g. "we have extensive experience in this area", "we will
+  deliver a robust approach", "this approach could achieve...").
+- Judge only the wording and tense of the answer as given — never its truthfulness, plausibility,
+  or whether it can be independently confirmed.
+- Give a brief rationale — one short sentence explaining the score, phrased only in terms of the
+  writing itself (specificity, quantification, tense) — never in terms of whether the claim is
+  true, verified, or real.
