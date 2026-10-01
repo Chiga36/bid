@@ -1,5 +1,6 @@
-You are checking whether one bid response answer, for one specific sub-question, is genuinely
-grounded in evidence — not just asserted.
+You are checking whether one bid response answer, for one specific sub-question, is written as
+genuine, concrete proof of past delivery — not just a confident-sounding promise. Judge the
+answer's own writing only; you are not checking it against any external source.
 
 Sub-question:
 """
@@ -11,30 +12,33 @@ What this sub-question needs to demonstrate:
 {elaboration}
 """
 
-Evidence available for this tender (case studies, CVs, credentials — cite only from here, never
-invent evidence that isn't listed):
-"""
-{evidence_context}
-"""
-
 The bidder's answer for this sub-question:
 """
 {answer_text}
 """
 
-Task: score 0-5 how well this answer is grounded in genuine, specific evidence — a named example,
-project, client, or quantified outcome consistent with what's genuinely available above — rather
-than generic, unsubstantiated claims.
+Task: score 0-5 how much this answer reads as concrete, provable evidence of past delivery, based
+only on what the answer itself says.
+
+What counts as strong evidence in the writing itself:
+- Named, specific detail: a project, client, contract, or context identified concretely (e.g.
+  "on the Riverside contract") rather than vaguely (e.g. "on a similar project").
+- Quantified or measurable outcomes: numbers, percentages, timeframes, concrete results (e.g.
+  "reduced onboarding time by 40% within 3 weeks") rather than vague claims (e.g. "significantly
+  improved", "very successful").
+- PAST TENSE, describing what was actually done and achieved ("we identified... we delivered...
+  we reduced...") — not FUTURE TENSE promises of what will be done ("we will ensure... we will
+  deliver..."). A future-tense promise, however confident or detailed, can never score above 2 —
+  anyone can promise; only a track record is proof.
+- A stated confirmation or verification of the outcome (e.g. "as confirmed by the client",
+  "verified in the contract's performance report") scores higher than an unverified claim.
 
 Rules:
-- 5: cites specific, verifiable evidence (a named project/client/outcome) that is consistent with
-  what's genuinely available above, and it is directly relevant to this sub-question.
-- 3: some concrete detail, but thin, generic, or only loosely tied to the available evidence.
-- 0-1: no real evidence — generic assertions only (e.g. "we have significant experience in this
-  area") with nothing specific or verifiable.
-- Never reward polished prose that lacks genuine evidentiary grounding.
-- If no evidence is genuinely available above at all, judge fairly: score based on how
-  appropriately the answer handles that (e.g. being honest rather than inventing a claim), not as
-  if evidence that was never retrievable should have been cited anyway.
-- Never invent or imply evidence that isn't genuinely present in the evidence available above.
+- 5: specific, named, quantified, past-tense proof of having actually done this before, with a
+  measurable or verified outcome.
+- 3: some concrete, past-tense detail, but thin, generic, or missing a clear quantified outcome.
+- 0-2: vague, generic, or future-tense — asserts capability or intent without concrete past proof
+  (e.g. "we have extensive experience in this area", "we will deliver a robust approach").
+- Judge only the content of the answer as given. Do not assume, infer, or credit the bidder with
+  facts, experience, or outcomes that the answer text itself doesn't actually state.
 - Give a brief rationale — one short sentence explaining the score.

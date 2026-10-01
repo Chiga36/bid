@@ -34,8 +34,8 @@ const AGENTS: AgentInfo[] = [
   },
   {
     name: "Evidence Score",
-    what: "Scores how well one sub-question's own answer is grounded in genuine evidence, out of 5.",
-    how: "A lightweight, single-purpose check against just that sub-answer's text — not the full draft — citing only this tender's retrieved evidence.",
+    what: "Scores how much one sub-question's own answer reads as concrete, past-tense proof of delivery, out of 5.",
+    how: "Judges only the answer's own writing — named detail, quantified outcomes, past tense vs. future-tense promises. Never cross-references the evidence library.",
     expected: "A sub-question's answer text, written in Response Builder before it's composed into the draft.",
     promptFiles: [{ label: "Evidence Score", filename: "evidence_score_v1.txt" }],
   },

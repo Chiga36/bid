@@ -138,9 +138,11 @@ def _element_out(row: dict) -> dict:
 
 @router.post("/elements/{element_id}/evidence-score", response_model=EvidenceScoreResult)
 def score_element_evidence(element_id: int, body: EvidenceScoreIn):
-    """Stateless — scores the given answer_text against this element's sub-question, but neither
-    the answer text nor the score is persisted. The answer only becomes durable once composed
-    into the real draft and saved as a version, same as the rest of Response Builder."""
+    """Stateless — scores how much the given answer_text itself reads as concrete, past-tense
+    proof of delivery (judged on its own writing, never cross-referenced against the evidence
+    library — see agents/evidence_score.py). Neither the answer text nor the score is persisted;
+    the answer only becomes durable once composed into the real draft and saved as a version,
+    same as the rest of Response Builder."""
     with db_session() as conn:
         element = conn.execute("SELECT * FROM elements WHERE id = ?", (element_id,)).fetchone()
         if element is None:

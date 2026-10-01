@@ -246,11 +246,14 @@ class EvidenceScoreIn(BaseModel):
 
 class EvidenceScoreResult(BaseModel):
     """Output of the Evidence Score agent — a lightweight, single-purpose check run against one
-    sub-question's own answer text (not a full draft), scoring how genuinely evidence-grounded
-    that answer is. Deliberately narrow: this is the per-sub-question "Check evidence" action in
-    Response Builder, not the full Completeness/Theme Review machinery."""
+    sub-question's own answer text (not a full draft), scoring how much that answer's own writing
+    reads as concrete, past-tense proof of delivery (named example, quantified outcome) rather
+    than a vague or future-tense promise. Judged purely on the answer's own content — never
+    cross-referenced against the evidence library. Deliberately narrow: this is the
+    per-sub-question "Check evidence" action in Response Builder, not the full
+    Completeness/Theme Review machinery."""
 
-    score: int = Field(ge=0, le=5, description="How well this answer is grounded in genuine, specific evidence, 0-5")
+    score: int = Field(ge=0, le=5, description="How much this answer reads as concrete, past-tense proof of delivery, 0-5")
     rationale: str = Field(description="One brief sentence explaining the score")
 
 
