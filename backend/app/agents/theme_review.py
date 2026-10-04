@@ -2,8 +2,11 @@
 toolkit. Complements Completeness (per-element status), Scoring (a 0-100 band), and
 Recommendation (up to three capped fixes) with a single, richer, reviewer-voice critique:
 strengths, gaps, Critical/High/Medium/Low-prioritised improvements, suggested replacement
-wording, and five separate 1-5 scores. One LLM call, selected by the question's own theme
-(already classified by Decomposition — see app/models.py's Theme enum).
+wording, and five separate 0-5 scores. One LLM call, selected by the question's own theme
+(already classified by Decomposition — see app/models.py's Theme enum). The 5-dimension scoring
+rubric itself is an eighth, shared prompt file (_SCORING_RUBRIC_FILE) spliced into whichever
+theme prompt runs via {scoring_rubric} — it's identical across all seven themes, so it isn't
+duplicated seven times over.
 
 Mostly genuine synthesis (a summary, suggested wording, an improved plan), not verbatim
 extraction, so there's nothing to substring-check for most fields — the no-fabrication discipline
@@ -22,6 +25,13 @@ from app.models import GapEntry, Theme, ThemeReviewResult
 _LEADING_NUMBER_PATTERN = re.compile(r"^\s*\d+[.)]\s*")
 
 AGENT_NAME = "theme_review"
+
+# The 5-dimension 0-5 scoring rubric is identical across all seven themes (only the assessment
+# framing above it differs per theme), so it lives in its own file and gets spliced into whichever
+# theme prompt is selected via the {scoring_rubric} variable, rather than being duplicated
+# verbatim in all seven — one file to edit (including via per-tender "Edit Skill" overrides)
+# instead of seven kept in sync by hand.
+_SCORING_RUBRIC_FILE = "theme_review_scoring_rubric_v1.txt"
 
 _PROMPT_FILES = {
     Theme.UNDERSTANDING_OUTCOMES: "theme_review_understanding_outcomes_v1.txt",
@@ -69,6 +79,7 @@ def run_theme_review(
     sub_questions: List[str],
     tender_id: Optional[int] = None,
 ) -> ThemeReviewResult:
+    scoring_rubric = llm_client.get_prompt_text(_SCORING_RUBRIC_FILE, tender_id)
     result = llm_client.call_structured(
         agent=AGENT_NAME,
         prompt_file=prompt_file_for_theme(theme),
@@ -79,6 +90,7 @@ def run_theme_review(
             "draft_text": draft_text,
             "evidence_context": evidence_context or "(no matching evidence found in this tender's evidence library)",
             "sub_questions_block": _format_sub_questions_block(sub_questions),
+            "scoring_rubric": scoring_rubric,
         },
         response_model=ThemeReviewResult,
         tender_id=tender_id,

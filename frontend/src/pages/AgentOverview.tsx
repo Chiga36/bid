@@ -73,7 +73,7 @@ const AGENTS: AgentInfo[] = [
   {
     name: "Theme Review",
     what: "A full expert critique of a draft from a specialist reviewer's perspective.",
-    how: "Picks one of seven expert prompts by theme; every gap is anchored to a real sub-question and a verified draft quote.",
+    how: "Picks one of seven expert prompts by theme, plus a shared scoring rubric used by all seven; every gap is anchored to a real sub-question and a verified draft quote.",
     expected: "A decomposed, locked question and a saved draft.",
     promptFiles: [
       { label: "Understanding & Outcomes", filename: "theme_review_understanding_outcomes_v1.txt" },
@@ -83,6 +83,7 @@ const AGENTS: AgentInfo[] = [
       { label: "Capability & Knowledge Transfer", filename: "theme_review_capability_knowledge_transfer_v1.txt" },
       { label: "Team & Resourcing", filename: "theme_review_team_resourcing_v1.txt" },
       { label: "Relevant Experience", filename: "theme_review_relevant_experience_v1.txt" },
+      { label: "Scoring rubric (shared by all 7 themes)", filename: "theme_review_scoring_rubric_v1.txt" },
     ],
   },
   {

@@ -60,6 +60,15 @@ def _resolve_template(prompt_file: str, tender_id: Optional[int]) -> str:
     return _load_prompt(prompt_file)
 
 
+def get_prompt_text(prompt_file: str, tender_id: Optional[int] = None) -> str:
+    """Public wrapper around _resolve_template, for callers that need a prompt's raw text to
+    splice into another prompt as a variable (see app/agents/theme_review.py's shared scoring
+    rubric) rather than sending it to the model directly via call_structured. Same per-tender
+    override resolution either way — a tender-specific edit to this prompt_file (if any) wins,
+    otherwise the on-disk default."""
+    return _resolve_template(prompt_file, tender_id)
+
+
 def _prompt_version_hash(template: str) -> str:
     return hashlib.sha256(template.encode("utf-8")).hexdigest()[:12]
 
