@@ -22,7 +22,7 @@ class Settings:
     # API server
     api_host: str = os.environ.get("API_BACKEND_HOST", "127.0.0.1")
     api_port: int = int(os.environ.get("API_BACKEND_PORT", "5000"))
-    payload_max_size: str = os.environ.get("API_PAYLOAD_MAX_SIZE", "50mb")
+    payload_max_size: str = os.environ.get("API_PAYLOAD_MAX_SIZE", "200mb")
 
     # Azure OpenAI
     azure_openai_endpoint: str = os.environ.get("AZURE_OPENAI_ENDPOINT", "")

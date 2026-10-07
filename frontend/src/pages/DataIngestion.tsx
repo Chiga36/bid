@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { uploadEvidence, uploadTenderDocument } from "../api/tenders";
+import { commitZipUpload, inspectZipUpload, uploadEvidence, uploadTenderDocument } from "../api/tenders";
+import type { ZipInspectResult } from "../api/types";
 import FileDropzone from "../components/FileDropzone";
 import { useTender } from "../context/TenderContext";
 
@@ -74,6 +75,7 @@ function joinWithAnd(items: string[]): string {
 
 type FilesByCategory = Record<string, File[]>;
 type Step = 1 | 2 | 3;
+type Mode = "manual" | "zip";
 
 const STEPS: { n: Step; label: string; sub: string }[] = [
   { n: 1, label: "Mandatory Input", sub: "Fill the required information" },
@@ -84,11 +86,23 @@ const STEPS: { n: Step; label: string; sub: string }[] = [
 export default function DataIngestion() {
   const { selectedTenderId } = useTender();
   const navigate = useNavigate();
+  const [mode, setMode] = useState<Mode>("manual");
   const [step, setStep] = useState<Step>(1);
   const [filesByCategory, setFilesByCategory] = useState<FilesByCategory>({});
   const [running, setRunning] = useState(false);
   const [resultLog, setResultLog] = useState<string[]>([]);
+  const [failedFiles, setFailedFiles] = useState<{ name: string; message: string }[]>([]);
   const [redirecting, setRedirecting] = useState(false);
+
+  // ZIP mode — its own 3-step flow (pick -> review & assign -> commit), sharing resultLog/
+  // failedFiles/redirecting above with the manual flow once a commit actually runs.
+  const [zipStep, setZipStep] = useState<1 | 2 | 3>(1);
+  const [zipFile, setZipFile] = useState<File | null>(null);
+  const [inspecting, setInspecting] = useState(false);
+  const [inspectError, setInspectError] = useState<string | null>(null);
+  const [zipInspectResult, setZipInspectResult] = useState<ZipInspectResult | null>(null);
+  const [assignments, setAssignments] = useState<Record<string, string | null>>({});
+  const [committing, setCommitting] = useState(false);
 
   // Once ingestion has actually processed something, move the user on to Know Your Client
   // automatically after a moment — the new workflow is Data Ingestion -> KYC -> Response
@@ -123,7 +137,9 @@ export default function DataIngestion() {
   async function handleExecute() {
     if (!selectedTenderId) return;
     setRunning(true);
+    setFailedFiles([]);
     const log: string[] = [];
+    const failures: { name: string; message: string }[] = [];
     let successCount = 0;
 
     for (const category of ALL_CATEGORIES) {
@@ -139,7 +155,9 @@ export default function DataIngestion() {
           }
           successCount += 1;
         } catch (err) {
-          log.push(`${category.title}: "${file.name}" failed — ${(err as Error).message}`);
+          const message = (err as Error).message || "Something went wrong.";
+          log.push(`${category.title}: "${file.name}" failed — ${message}`);
+          failures.push({ name: file.name, message });
         }
       }
     }
@@ -148,6 +166,7 @@ export default function DataIngestion() {
       log.push("No files were added in any category, so nothing was uploaded. That's fine — add files whenever you're ready.");
     }
     setResultLog(log);
+    setFailedFiles(failures);
     setRunning(false);
     // Only auto-advance if something actually succeeded — if every upload failed, stay put so
     // the errors above are visible and actionable rather than scrolled away from.
@@ -156,12 +175,89 @@ export default function DataIngestion() {
     }
   }
 
+  async function handleInspectZip() {
+    if (!selectedTenderId || !zipFile) return;
+    setInspecting(true);
+    setInspectError(null);
+    try {
+      const result = await inspectZipUpload(selectedTenderId, zipFile);
+      setZipInspectResult(result);
+      const initial: Record<string, string | null> = {};
+      result.files.forEach((f) => {
+        initial[f.filename] = f.suggested_category;
+      });
+      setAssignments(initial);
+      setZipStep(2);
+    } catch (err) {
+      setInspectError((err as Error).message || "Something went wrong reading that ZIP.");
+    } finally {
+      setInspecting(false);
+    }
+  }
+
+  async function handleCommitZip() {
+    if (!selectedTenderId || !zipInspectResult) return;
+    setCommitting(true);
+    setFailedFiles([]);
+    try {
+      const result = await commitZipUpload(selectedTenderId, zipInspectResult.staging_id, assignments);
+      const log: string[] = [];
+      const failures: { name: string; message: string }[] = [];
+      let successCount = 0;
+      for (const r of result.results) {
+        if (r.success) {
+          log.push(`"${r.filename}" -> ${r.message}`);
+          successCount += 1;
+        } else {
+          log.push(`"${r.filename}" failed — ${r.message}`);
+          failures.push({ name: r.filename, message: r.message });
+        }
+      }
+      if (log.length === 0) {
+        log.push("No files were assigned a category, so nothing was uploaded.");
+      }
+      setResultLog(log);
+      setFailedFiles(failures);
+      setZipStep(3);
+      if (successCount > 0) {
+        setRedirecting(true);
+      }
+    } catch (err) {
+      const message = (err as Error).message || "Something went wrong.";
+      setFailedFiles([{ name: zipFile?.name ?? "ZIP upload", message }]);
+      setZipStep(3);
+    } finally {
+      setCommitting(false);
+    }
+  }
+
+  function resetZipFlow() {
+    setZipStep(1);
+    setZipFile(null);
+    setZipInspectResult(null);
+    setAssignments({});
+    setResultLog([]);
+    setFailedFiles([]);
+  }
+
   if (!selectedTenderId) {
     return <p className="text-sm text-slate-500">Create or select a tender first (top right).</p>;
   }
 
   return (
     <div className="flex flex-col gap-6">
+      {failedFiles.length > 0 && (
+        <div className="rounded-lg border border-rose-300 bg-rose-50 p-3">
+          <ul className="space-y-0.5 text-sm font-medium text-rose-700">
+            {failedFiles.map((f, i) => (
+              <li key={i}>
+                "{f.name}" file could not be processed — {f.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div>
         <h1 className="text-lg font-semibold text-slate-900">Knowledge Base Ingestion</h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-500">
@@ -171,6 +267,26 @@ export default function DataIngestion() {
         </p>
       </div>
 
+      <div className="flex gap-2">
+        <button
+          onClick={() => setMode("manual")}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            mode === "manual" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          Manual upload
+        </button>
+        <button
+          onClick={() => setMode("zip")}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            mode === "zip" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          Upload via ZIP
+        </button>
+      </div>
+
+      {mode === "manual" && (
       <div className="rounded-lg border border-slate-200 bg-white p-6">
         <Stepper current={step} reachable={reachableStep} onSelect={setStep} />
 
@@ -300,6 +416,134 @@ export default function DataIngestion() {
           )}
         </div>
       </div>
+      )}
+
+      {mode === "zip" && (
+        <div className="rounded-lg border border-slate-200 bg-white p-6">
+          {zipStep === 1 && (
+            <StepBody>
+              <FileDropzone
+                index={1}
+                title="Document pack (.zip)"
+                description="Upload the whole tender document pack as one ZIP file. We'll unzip it, guess each file's category from its name, and let you review everything before anything is ingested."
+                files={zipFile ? [zipFile] : []}
+                onFilesChange={(files) => setZipFile(files[files.length - 1] ?? null)}
+                required
+              />
+              {inspectError && <p className="text-sm font-medium text-rose-600">{inspectError}</p>}
+              <div className="flex items-center justify-end">
+                <button
+                  disabled={!zipFile || inspecting}
+                  onClick={handleInspectZip}
+                  className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  {inspecting ? "Inspecting..." : "Inspect ZIP"}
+                </button>
+              </div>
+            </StepBody>
+          )}
+
+          {zipStep === 2 && zipInspectResult && (
+            <StepBody>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-800">Review & assign categories</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  We matched {zipInspectResult.files.filter((f) => f.suggested_category).length} of{" "}
+                  {zipInspectResult.files.length} file(s) automatically. Check each one before continuing —
+                  unmatched files need a category picked by hand, or can be skipped.
+                </p>
+              </div>
+
+              <div className="overflow-hidden rounded-lg border border-slate-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase text-slate-400">
+                    <tr>
+                      <th className="px-4 py-2 text-left">File</th>
+                      <th className="px-4 py-2 text-left">Size</th>
+                      <th className="px-4 py-2 text-left">Category</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {zipInspectResult.files.map((f) => (
+                      <tr key={f.filename}>
+                        <td className="px-4 py-2 text-slate-700">
+                          {f.filename}
+                          {!f.suggested_category && (
+                            <span className="ml-2 text-[11px] font-medium text-amber-600">no match — pick one</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 text-slate-500">{(f.size_bytes / (1024 * 1024)).toFixed(1)} MB</td>
+                        <td className="px-4 py-2">
+                          <select
+                            value={assignments[f.filename] ?? ""}
+                            onChange={(e) =>
+                              setAssignments((prev) => ({ ...prev, [f.filename]: e.target.value || null }))
+                            }
+                            className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                          >
+                            <option value="">Skip this file</option>
+                            {ALL_CATEGORIES.map((c) => (
+                              <option key={c.key} value={c.key}>
+                                {c.title}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <button onClick={() => setZipStep(1)} className="text-sm text-slate-500 hover:text-slate-700">
+                  ← Back
+                </button>
+                <button
+                  disabled={committing}
+                  onClick={handleCommitZip}
+                  className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  {committing ? "Processing..." : "Start Data Ingestion"}
+                </button>
+              </div>
+            </StepBody>
+          )}
+
+          {zipStep === 3 && (
+            <StepBody>
+              {resultLog.length > 0 && (
+                <div className="rounded-lg border border-slate-200 bg-white p-4">
+                  <p className="text-sm font-semibold text-slate-800">Ingestion results</p>
+                  <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                    {resultLog.map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {redirecting && (
+                <div className="flex items-center justify-between rounded-lg border border-brand-200 bg-brand-50 px-4 py-3">
+                  <span className="text-sm text-brand-700">Taking you to Know Your Client...</span>
+                  <button
+                    onClick={() => navigate("/kyc")}
+                    className="rounded-md bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600"
+                  >
+                    Continue now →
+                  </button>
+                </div>
+              )}
+
+              <div>
+                <button onClick={resetZipFlow} className="text-sm text-slate-500 hover:text-slate-700">
+                  ← Upload another ZIP
+                </button>
+              </div>
+            </StepBody>
+          )}
+        </div>
+      )}
     </div>
   );
 }

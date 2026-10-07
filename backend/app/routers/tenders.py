@@ -15,15 +15,17 @@ from app import vector_store
 from app.agents.ingestion import extract_questions
 from app.config import settings
 from app.db import db_session
-from app.document_extraction import exclude_sheets, read_document
+from app.document_extraction import keep_only_sheets, read_document
 from app.models import QuestionOut, ScoringBandIn, TenderCreate, TenderOut
 
 router = APIRouter(tags=["tenders"])
 
-# The "Questionnaire" upload category is the Award Questionnaire only — the Selection
-# Questionnaire sheet is dropped before the Ingestion agent ever sees it, so it cannot end up
-# extracting questions from it (it never sees that text at all).
-_EXCLUDED_SHEET_PATTERNS = ["selection questionnaire"]
+# The "Questionnaire" upload category is the Award Questionnaire only. An allowlist, not a
+# blocklist: a real tender workbook can carry other sheets beyond "Selection Questionnaires" with
+# unpredictable names (a cover page, an "Other Content" tab, instructions) — naming every sheet to
+# exclude is a losing game, so instead only the sheet that genuinely IS the Award Questionnaire is
+# kept, and everything else is dropped before the Ingestion agent ever sees it.
+_AWARD_QUESTIONNAIRE_SHEET_PATTERNS = ["award questionnaire"]
 
 
 @router.post("/tenders", response_model=TenderOut)
@@ -158,36 +160,32 @@ def get_scoring_bands(tender_id: int):
     return [dict(r) for r in rows]
 
 
-@router.post("/tenders/{tender_id}/documents", response_model=List[QuestionOut])
-async def upload_document(tender_id: int, file: UploadFile):
-    with db_session() as conn:
-        tender = conn.execute("SELECT id FROM tenders WHERE id = ?", (tender_id,)).fetchone()
-        if tender is None:
-            raise HTTPException(status_code=404, detail="Tender not found")
-
+def _ingest_document_bytes(tender_id: int, filename: str, contents: bytes) -> List[dict]:
+    """The real body of a Questionnaire upload, independent of how the bytes arrived (a direct
+    single-file POST, or a file staged from a ZIP — see routers/zip_ingestion.py). Writes the file
+    to disk, extracts questions from it, and returns the created question rows."""
     tender_dir: Path = settings.data_dir / "tenders" / str(tender_id)
     tender_dir.mkdir(parents=True, exist_ok=True)
-    dest_path = tender_dir / file.filename
-    contents = await file.read()
+    dest_path = tender_dir / filename
     dest_path.write_bytes(contents)
 
     parsed = read_document(dest_path)
-    document_text = exclude_sheets(parsed.full_text, _EXCLUDED_SHEET_PATTERNS)
+    document_text = keep_only_sheets(parsed.full_text, _AWARD_QUESTIONNAIRE_SHEET_PATTERNS)
     candidates = extract_questions(document_text, tender_id)
 
     created: List[dict] = []
     with db_session() as conn:
         doc_cur = conn.execute(
             "INSERT INTO documents (tender_id, file_path, original_filename) VALUES (?, ?, ?)",
-            (tender_id, str(dest_path), file.filename),
+            (tender_id, str(dest_path), filename),
         )
         document_id = doc_cur.lastrowid
 
         for candidate in candidates:
             q_cur = conn.execute(
                 """
-                INSERT INTO questions (tender_id, title, question_text, category, source_ref)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO questions (tender_id, title, question_text, category, source_ref, section)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
                     tender_id,
@@ -195,12 +193,24 @@ async def upload_document(tender_id: int, file: UploadFile):
                     candidate.question_text,
                     candidate.category,
                     f"document:{document_id}",
+                    candidate.section,
                 ),
             )
             row = conn.execute("SELECT * FROM questions WHERE id = ?", (q_cur.lastrowid,)).fetchone()
             created.append(dict(row))
 
     return created
+
+
+@router.post("/tenders/{tender_id}/documents", response_model=List[QuestionOut])
+async def upload_document(tender_id: int, file: UploadFile):
+    with db_session() as conn:
+        tender = conn.execute("SELECT id FROM tenders WHERE id = ?", (tender_id,)).fetchone()
+        if tender is None:
+            raise HTTPException(status_code=404, detail="Tender not found")
+
+    contents = await file.read()
+    return _ingest_document_bytes(tender_id, file.filename, contents)
 
 
 @router.post("/tenders/{tender_id}/questions", response_model=QuestionOut)

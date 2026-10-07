@@ -1,7 +1,7 @@
 """Pydantic models: both the API's request/response shapes and the structured-output schemas
 that agents force Azure OpenAI to return through (via llm_client.call_structured)."""
 from enum import Enum
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -67,6 +67,7 @@ class QuestionOut(BaseModel):
     question_text: str
     category: QuestionCategory
     source_ref: Optional[str] = None
+    section: Optional[str] = None
     has_draft: bool = False
 
 
@@ -367,6 +368,10 @@ class ExtractedQuestion(BaseModel):
     title: str
     question_text: str = Field(description="Verbatim excerpt from the source text covering this question's full ask")
     category: QuestionCategory
+    section: Optional[str] = Field(
+        default=None,
+        description="The section/topic this question falls under (e.g. 'Technical Competence', 'Cost'), taken from the nearest preceding '## Section: ' marker or heading in the source text — null if none is genuinely present",
+    )
 
 
 class QuestionExtractionResult(BaseModel):
@@ -457,3 +462,30 @@ class TenderPromptOut(BaseModel):
 
 class TenderPromptIn(BaseModel):
     content_text: str
+
+
+class ZipInspectFile(BaseModel):
+    filename: str
+    suggested_category: Optional[str] = None
+    size_bytes: int
+
+
+class ZipInspectOut(BaseModel):
+    staging_id: str
+    files: List[ZipInspectFile]
+
+
+class ZipCommitIn(BaseModel):
+    # filename -> category key, or null to skip that file entirely (never ingested).
+    assignments: Dict[str, Optional[str]]
+
+
+class ZipCommitFileResult(BaseModel):
+    filename: str
+    category: Optional[str] = None
+    success: bool
+    message: str
+
+
+class ZipCommitOut(BaseModel):
+    results: List[ZipCommitFileResult]

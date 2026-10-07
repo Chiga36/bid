@@ -18,6 +18,10 @@ each one:
     assessed pass/fail.
   - "pass_fail" — a mandatory technical requirement assessed pass/fail, not scored.
   - "scored" — a technical question that is scored or weighted.
+- Set "section" to the topic/section this question falls under — e.g. "Technical Competence",
+  "Social Values", "Cost". Look for the nearest preceding "## Section: <name>" marker or "## "
+  heading above this question in the document text, and use that name verbatim. If genuinely none
+  is present above this question anywhere in the text, leave "section" null — never invent one.
 
 Rules:
 - Only extract genuine questions or requirements a bidder must respond to. Do NOT extract document
@@ -26,7 +30,8 @@ Rules:
 - Some documents number requirements hierarchically, e.g. "3.1" as a section heading with
   "3.1.1", "3.1.2", "3.1.3" underneath as the individual, actually-answerable questions. Extract
   at the individual-question (leaf) level, not the section-heading level — a bare section number
-  with no question text of its own is not itself something to extract.
+  with no question text of its own is not itself something to extract (use it only as this
+  question's "section" value, per the instruction above).
 - A question's own weighting or pass/fail status is often stated inline, in parentheses right
   after its title — for example "Confirmation of Ability to Mobilise (Pass / Fail)" or
   "Understanding of Objectives and Risks (6%)". Treat "(Pass / Fail)" as a strong signal that the

@@ -33,31 +33,27 @@ _STRATEGY_CATEGORY = "strategy"
 _CONTEXT_CATEGORY = "context"
 
 
-@router.post("/tenders/{tender_id}/evidence")
-async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form(default="general")):
-    """`category` is a UI grouping label only (see app/schema.sql) — it never scopes retrieval,
-    which stays tender-wide by design."""
-    with db_session() as conn:
-        tender = conn.execute("SELECT id FROM tenders WHERE id = ?", (tender_id,)).fetchone()
-        if tender is None:
-            raise HTTPException(status_code=404, detail="Tender not found")
-
+def _ingest_evidence_bytes(tender_id: int, filename: str, contents: bytes, category: str) -> dict:
+    """The real body of an evidence upload, independent of how the bytes arrived (a direct
+    single-file POST, or a file staged from a ZIP — see routers/zip_ingestion.py). `category` is a
+    UI grouping label only (see app/schema.sql) — it never scopes retrieval, which stays
+    tender-wide by design."""
     evidence_dir: Path = settings.data_dir / "tenders" / str(tender_id) / "evidence"
     evidence_dir.mkdir(parents=True, exist_ok=True)
-    dest_path = evidence_dir / file.filename
-    dest_path.write_bytes(await file.read())
+    dest_path = evidence_dir / filename
+    dest_path.write_bytes(contents)
 
     parsed = read_document(dest_path)
     chunk_texts = [p for p in parsed.paragraphs if len(p) >= _MIN_CHUNK_CHARS]
 
     chunk_ids = [f"ev-{uuid.uuid4().hex}" for _ in chunk_texts]
-    vector_store.add_evidence(tender_id, chunk_ids, chunk_texts, source_document=file.filename)
+    vector_store.add_evidence(tender_id, chunk_ids, chunk_texts, source_document=filename)
 
     with db_session() as conn:
         for text in chunk_texts:
             conn.execute(
                 "INSERT INTO evidence_chunks (tender_id, source_document, category, chunk_text) VALUES (?, ?, ?, ?)",
-                (tender_id, file.filename, category, text),
+                (tender_id, filename, category, text),
             )
 
     methodology_extracted = False
@@ -75,7 +71,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
                 with db_session() as conn:
                     conn.execute(
                         "INSERT INTO evaluation_methodology (tender_id, source_document, content_text) VALUES (?, ?, ?)",
-                        (tender_id, file.filename, summary),
+                        (tender_id, filename, summary),
                     )
                 methodology_extracted = True
         except Exception:
@@ -89,11 +85,11 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
                         conn.execute(
                             "INSERT INTO tender_requirements (tender_id, source_document, category, requirement_text, strength) "
                             "VALUES (?, ?, ?, ?, ?)",
-                            (tender_id, file.filename, req.category, req.requirement_text, req.strength),
+                            (tender_id, filename, req.category, req.requirement_text, req.strength),
                         )
                 req_chunk_ids = [f"tr-{uuid.uuid4().hex}" for _ in requirements]
                 req_chunk_texts = [req.requirement_text for req in requirements]
-                vector_store.add_tender_requirements(tender_id, req_chunk_ids, req_chunk_texts, source_document=file.filename)
+                vector_store.add_tender_requirements(tender_id, req_chunk_ids, req_chunk_texts, source_document=filename)
                 requirements_extracted = len(requirements)
         except Exception:
             pass
@@ -123,7 +119,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
                         conn.execute(
                             "INSERT INTO procurement_stages (tender_id, source_document, stage_name, stage_date) "
                             "VALUES (?, ?, ?, ?)",
-                            (tender_id, file.filename, stage.stage_name, stage.stage_date),
+                            (tender_id, filename, stage.stage_name, stage.stage_date),
                         )
                 procurement_stages_extracted = len(stages)
         except Exception:
@@ -144,7 +140,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
                     conn.execute(
                         "INSERT INTO kyc_insights (tender_id, source_document, client_summary, key_facts, considerations) "
                         "VALUES (?, ?, ?, ?, ?)",
-                        (tender_id, file.filename, kyc.client_summary, json.dumps(kyc.key_facts), json.dumps(kyc.considerations)),
+                        (tender_id, filename, kyc.client_summary, json.dumps(kyc.key_facts), json.dumps(kyc.considerations)),
                     )
                 kyc_extracted = True
         except Exception:
@@ -152,7 +148,7 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
 
     return {
         "tender_id": tender_id,
-        "source_document": file.filename,
+        "source_document": filename,
         "category": category,
         "chunks_ingested": len(chunk_texts),
         "methodology_extracted": methodology_extracted,
@@ -161,6 +157,17 @@ async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form
         "procurement_stages_extracted": procurement_stages_extracted,
         "kyc_extracted": kyc_extracted,
     }
+
+
+@router.post("/tenders/{tender_id}/evidence")
+async def upload_evidence(tender_id: int, file: UploadFile, category: str = Form(default="general")):
+    with db_session() as conn:
+        tender = conn.execute("SELECT id FROM tenders WHERE id = ?", (tender_id,)).fetchone()
+        if tender is None:
+            raise HTTPException(status_code=404, detail="Tender not found")
+
+    contents = await file.read()
+    return _ingest_evidence_bytes(tender_id, file.filename, contents, category)
 
 
 @router.get("/tenders/{tender_id}/evidence")

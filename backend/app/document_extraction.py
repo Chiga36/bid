@@ -61,6 +61,46 @@ def _read_docx(path: Path) -> RawDocument:
     return RawDocument(full_text="\n\n".join(full_text_lines), paragraphs=paragraphs, tables=tables)
 
 
+_NUMBER_CELL_PATTERN = re.compile(r"^\d+(\.\d+)*$")
+
+
+def _row_number_segments(cells: List[str]):
+    """Returns the dot-separated segments of the row's first cell if it looks like a hierarchical
+    item number (e.g. "3.1.2" -> ["3", "1", "2"]), else None — the header row ("Number | Name |
+    ..."), a blank-number instructional row, or anything else that isn't a numbered item."""
+    first = cells[0].strip() if cells else ""
+    if not _NUMBER_CELL_PATTERN.match(first):
+        return None
+    return first.split(".")
+
+
+def _is_section_header(current_segments, next_segments) -> bool:
+    """A row is a section header — a label, not a real question — if the very next numbered row
+    nests directly under it: its number starts with this row's number as a dot-prefix (e.g. "3.1"
+    before "3.1.1", or "3.4.2" before "3.4.2.1"). Holds regardless of nesting depth, with no need
+    to guess from content length or wording."""
+    if current_segments is None or next_segments is None:
+        return False
+    return len(next_segments) > len(current_segments) and next_segments[: len(current_segments)] == current_segments
+
+
+def _rows_to_text_lines(rows: List[List[str]]) -> List[str]:
+    """Marks detected section-header rows as "## Section: <name>" (same marker convention as
+    "## Sheet: " and docx's "## <heading>") instead of dumping them as a raw row, so downstream
+    extraction (app/agents/ingestion.py) can tell a section label apart from a real question
+    without inferring it purely from prose."""
+    segments_per_row = [_row_number_segments(row) for row in rows]
+    lines: List[str] = []
+    for i, row in enumerate(rows):
+        next_segments = next((s for s in segments_per_row[i + 1 :] if s is not None), None)
+        if _is_section_header(segments_per_row[i], next_segments):
+            name = row[1].strip() if len(row) > 1 and row[1].strip() else row[0].strip()
+            lines.append(f"## Section: {name}")
+        else:
+            lines.append(" | ".join(row))
+    return lines
+
+
 def _read_xlsx(path: Path) -> RawDocument:
     workbook = openpyxl.load_workbook(str(path), data_only=True)
 
@@ -76,7 +116,7 @@ def _read_xlsx(path: Path) -> RawDocument:
             if not any(cell.strip() for cell in cells):
                 continue
             sheet_rows.append(cells)
-            full_text_lines.append(" | ".join(cells))
+        full_text_lines.extend(_rows_to_text_lines(sheet_rows))
         if sheet_rows:
             tables.append(RawTable(rows=sheet_rows))
             paragraphs.append(f"Sheet: {sheet.title}\n" + "\n".join(" | ".join(r) for r in sheet_rows))
@@ -127,6 +167,11 @@ _READERS = {
     ".pptx": _read_pptx,
 }
 
+# Public, stable export of the supported-extension set — e.g. routers/zip_ingestion.py uses this
+# to silently skip unsupported files (images, .DS_Store, nested archives) found inside a ZIP,
+# without reaching into the "private" _READERS dict directly.
+SUPPORTED_EXTENSIONS = frozenset(_READERS)
+
 
 def read_document(path) -> RawDocument:
     path = Path(path)
@@ -140,12 +185,7 @@ def read_document(path) -> RawDocument:
 _SHEET_MARKER_PATTERN = re.compile(r"^## Sheet: (.+)$", re.MULTILINE)
 
 
-def exclude_sheets(full_text: str, name_patterns: List[str]) -> str:
-    """Drops any '## Sheet: <title>' block (as written by _read_xlsx above) whose title matches
-    one of `name_patterns` (case-insensitive substring match) — e.g. excluding a "Selection
-    Questionnaire" sheet before question extraction ever sees it, so the LLM can't extract from
-    content it was never shown. A no-op on text with no sheet markers at all, i.e. anything that
-    didn't come from an .xlsx — this only ever applies to xlsx's own sheet structure."""
+def _filter_sheets(full_text: str, name_patterns: List[str], keep_matching: bool) -> str:
     matches = list(_SHEET_MARKER_PATTERN.finditer(full_text))
     if not matches:
         return full_text
@@ -156,7 +196,28 @@ def exclude_sheets(full_text: str, name_patterns: List[str]) -> str:
         title = match.group(1).strip()
         start = match.start()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(full_text)
-        if any(pattern in title.lower() for pattern in lowered_patterns):
+        is_match = any(pattern in title.lower() for pattern in lowered_patterns)
+        if is_match != keep_matching:
             continue
         kept_blocks.append(full_text[start:end].strip())
     return "\n\n".join(kept_blocks)
+
+
+def exclude_sheets(full_text: str, name_patterns: List[str]) -> str:
+    """Drops any '## Sheet: <title>' block (as written by _read_xlsx above) whose title matches
+    one of `name_patterns` (case-insensitive substring match) — e.g. excluding a "Selection
+    Questionnaire" sheet before question extraction ever sees it, so the LLM can't extract from
+    content it was never shown. A no-op on text with no sheet markers at all, i.e. anything that
+    didn't come from an .xlsx — this only ever applies to xlsx's own sheet structure."""
+    return _filter_sheets(full_text, name_patterns, keep_matching=False)
+
+
+def keep_only_sheets(full_text: str, name_patterns: List[str]) -> str:
+    """The inverse of exclude_sheets — an allowlist rather than a blocklist: drops every sheet
+    whose title does NOT match one of `name_patterns`, keeping only the ones that do. Safer than
+    exclude_sheets for a question-extraction source like the Award Questionnaire: a real tender
+    workbook can carry extra sheets beyond the two well-known ones (a cover page, an "Other
+    Content" tab, instructions) with unpredictable names — naming every sheet to exclude is a
+    losing game, whereas naming the one sheet that genuinely IS the question set is robust
+    regardless of what else the workbook contains. A no-op on text with no sheet markers at all."""
+    return _filter_sheets(full_text, name_patterns, keep_matching=True)

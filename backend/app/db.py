@@ -24,9 +24,19 @@ def init_db() -> None:
         conn.commit()
         _migrate_constraint_kind_to_sub_question(conn)
         _drop_evidence_suggestion_column(conn)
+        _add_question_section_column(conn)
         conn.commit()
     finally:
         conn.close()
+
+
+def _add_question_section_column(conn: sqlite3.Connection) -> None:
+    """Plain additive column — the section/topic a question falls under (e.g. 'Technical
+    Competence', 'Cost'), extracted from the Award Questionnaire's own section headings. Safe to
+    run on every startup; a no-op once the column already exists."""
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(questions)").fetchall()}
+    if "section" not in columns:
+        conn.execute("ALTER TABLE questions ADD COLUMN section TEXT")
 
 
 def _drop_evidence_suggestion_column(conn: sqlite3.Connection) -> None:

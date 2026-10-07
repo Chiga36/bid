@@ -27,6 +27,7 @@ class CandidateQuestion:
     title: str
     question_text: str
     category: str  # "sq" | "pass_fail" | "scored"
+    section: Optional[str] = None
 
 
 def _extract_from_chunk(chunk_text: str, tender_id: Optional[int] = None) -> List[CandidateQuestion]:
@@ -40,7 +41,9 @@ def _extract_from_chunk(chunk_text: str, tender_id: Optional[int] = None) -> Lis
     candidates: List[CandidateQuestion] = []
     for q in result.questions:
         if q.question_text and q.question_text in chunk_text:
-            candidates.append(CandidateQuestion(title=q.title, question_text=q.question_text, category=q.category))
+            candidates.append(
+                CandidateQuestion(title=q.title, question_text=q.question_text, category=q.category, section=q.section)
+            )
         # Silently dropped if not a verbatim match — no fabricated question reaches the DB.
     return candidates
 

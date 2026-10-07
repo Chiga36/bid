@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS questions (
     question_text TEXT NOT NULL,
     category      TEXT NOT NULL CHECK (category IN ('sq', 'pass_fail', 'scored')),
     source_ref    TEXT,
+    section       TEXT,
     created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

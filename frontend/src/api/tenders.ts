@@ -1,5 +1,15 @@
 import { apiDelete, apiGet, apiPost, apiUpload } from "./http";
-import type { Clarification, EvidenceChunk, KYCInsight, ProcurementStage, Question, ScoringBand, Tender } from "./types";
+import type {
+  Clarification,
+  EvidenceChunk,
+  KYCInsight,
+  ProcurementStage,
+  Question,
+  ScoringBand,
+  Tender,
+  ZipCommitResult,
+  ZipInspectResult,
+} from "./types";
 
 export function listTenders() {
   return apiGet<Tender[]>("/tenders");
@@ -73,4 +83,14 @@ export function listProcurementStages(tenderId: number) {
 
 export function listKycInsights(tenderId: number) {
   return apiGet<KYCInsight[]>(`/tenders/${tenderId}/kyc`);
+}
+
+export function inspectZipUpload(tenderId: number, file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiUpload<ZipInspectResult>(`/tenders/${tenderId}/zip-upload`, formData);
+}
+
+export function commitZipUpload(tenderId: number, stagingId: string, assignments: Record<string, string | null>) {
+  return apiPost<ZipCommitResult>(`/tenders/${tenderId}/zip-upload/${stagingId}/commit`, { assignments });
 }

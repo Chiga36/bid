@@ -29,6 +29,7 @@ export interface Question {
   question_text: string;
   category: QuestionCategory;
   source_ref: string | null;
+  section: string | null;
   has_draft: boolean;
 }
 
@@ -186,6 +187,28 @@ export interface TenderPrompt {
   prompt_file: string;
   content_text: string;
   is_override: boolean;
+}
+
+export interface ZipInspectFile {
+  filename: string;
+  suggested_category: string | null;
+  size_bytes: number;
+}
+
+export interface ZipInspectResult {
+  staging_id: string;
+  files: ZipInspectFile[];
+}
+
+export interface ZipCommitFileResult {
+  filename: string;
+  category: string | null;
+  success: boolean;
+  message: string;
+}
+
+export interface ZipCommitResult {
+  results: ZipCommitFileResult[];
 }
 
 export class ApiError extends Error {

@@ -28,9 +28,17 @@ their own example is real — your only job is to judge HOW it is written: does 
 specificity and tense of genuine evidence, or does it read as a vague, generic, future-tense
 promise. Take every factual claim in the answer at face value.
 
-What makes writing read as strong evidence:
+What makes writing read as strong evidence (drawn from real UK public-sector evaluator feedback —
+see the worked examples below):
 - Named, specific detail: a project, client, contract, or context identified concretely (e.g.
   "on the Riverside contract") rather than vaguely (e.g. "on a similar project").
+- NAMING a mechanism is not, by itself, strong evidence. A real evaluator consistently marks
+  responses down for citing a named initiative, model, or office (e.g. "our delivery academy",
+  "our value realisation framework") but then failing to explain HOW it actually operated IN
+  PRACTICE, or what it measurably achieved. The gap between "named it" and "proved it" is the
+  single biggest thing separating a winning answer from a losing one in real evaluator feedback —
+  score strong evidence only when the mechanism is both named AND explained in operation AND tied
+  to a measured outcome, not for the naming alone.
 - Quantified or measurable detail: numbers, percentages, timeframes, concrete results (e.g.
   "reduced onboarding time by 40% within 3 weeks") rather than vague claims (e.g. "significantly
   improved", "very successful").
@@ -40,15 +48,41 @@ What makes writing read as strong evidence:
   conditional promise, however confident or detailed, can never score above 2 — anyone can
   promise or hypothesise; only a definite past-tense claim reads as a track record.
 
+Worked examples (generic, illustrative — judge the actual answer above on its own merits, not by
+matching it against these):
+
+Example A — scores 5:
+Answer: "On the Fenwick Council contract, we ran weekly delivery-risk workshops with the client's
+own programme board, logged each risk with a named owner, and reduced the open risk count by 60%
+within the first eight weeks, verified against the council's own risk register."
+Why 5: names the client and contract, explains HOW the mechanism operated (weekly workshops,
+named owners, logged against a real register), states a quantified outcome (60% in 8 weeks), and
+is written in definite past tense throughout.
+
+Example B — scores 2, not 5, despite naming a mechanism:
+Answer: "We established a dedicated governance board to oversee delivery and introduced a
+continuous improvement framework to drive efficiency across the contract."
+Why only 2: names two mechanisms (a governance board, an improvement framework) but never explains
+how either actually operated, gives no timeframe, and states no measurable outcome — it reads as a
+label, not a track record. This is the single most common real-evaluator mark-down: a credible-
+sounding mechanism named without the practical detail or the number behind it.
+
+Example C — scores 0:
+Answer: "We will put in place a robust governance structure and ensure continuous improvement is
+embedded throughout delivery."
+Why 0: entirely future tense, no named mechanism, no specifics, no outcome — a generic promise.
+
 Rules:
 - 5: specific, named, quantified, definite past-tense claim of having actually done this before,
-  with a measurable outcome stated.
-- 3: some concrete, past-tense detail, but thin, generic, or missing a clear quantified outcome.
-- 0-2: vague, generic, future-tense, or conditional — asserts capability or intent without
-  concrete past-tense specifics (e.g. "we have extensive experience in this area", "we will
-  deliver a robust approach", "this approach could achieve...").
+  with the mechanism explained in operation AND a measurable outcome stated.
+- 3-4: a named, past-tense mechanism with at least some operational detail or a partial outcome,
+  but thinner than Example A — missing either the full "how it worked" explanation or a precise
+  number.
+- 1-2: names a mechanism or initiative but doesn't explain how it operated or what it achieved
+  (Example B) — a label, not proof — even though it isn't vague in the abstract sense.
+- 0: vague, generic, future-tense, or conditional, with no named mechanism at all (Example C).
 - Judge only the wording and tense of the answer as given — never its truthfulness, plausibility,
   or whether it can be independently confirmed.
 - Give a brief rationale — one short sentence explaining the score, phrased only in terms of the
-  writing itself (specificity, quantification, tense) — never in terms of whether the claim is
-  true, verified, or real.
+  writing itself (specificity, mechanism explained vs. merely named, quantification, tense) —
+  never in terms of whether the claim is true, verified, or real.

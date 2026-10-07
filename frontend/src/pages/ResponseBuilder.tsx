@@ -28,6 +28,29 @@ import StatusPill from "../components/StatusPill";
 import VersionHistoryPanel from "../components/VersionHistoryPanel";
 import { useTender } from "../context/TenderContext";
 
+const UNSECTIONED_LABEL = "Other";
+
+// Groups in order of first appearance in `questions` (the Award Questionnaire's own order, not
+// alphabetical) — preserves the tender's own structure rather than re-sorting it. Questions with
+// no section (e.g. added manually, or from a questionnaire with no detectable section headings)
+// fall into one "Other" group, rendered last.
+function groupQuestionsBySection(questions: Question[]): { section: string; questions: Question[] }[] {
+  const order: string[] = [];
+  const bySection = new Map<string, Question[]>();
+  for (const q of questions) {
+    const key = q.section ?? UNSECTIONED_LABEL;
+    if (!bySection.has(key)) {
+      order.push(key);
+      bySection.set(key, []);
+    }
+    bySection.get(key)!.push(q);
+  }
+  // "Other" always last, regardless of where it first appeared.
+  const ordered = order.filter((s) => s !== UNSECTIONED_LABEL);
+  if (bySection.has(UNSECTIONED_LABEL)) ordered.push(UNSECTIONED_LABEL);
+  return ordered.map((section) => ({ section, questions: bySection.get(section)! }));
+}
+
 export default function ResponseBuilder() {
   const { selectedTenderId } = useTender();
 
@@ -253,25 +276,31 @@ export default function ResponseBuilder() {
           {questions.length > 0 && <QuestionsProgress attempted={attemptedCount} total={questions.length} />}
         </div>
         {questions.length === 0 && <p className="px-1 text-xs text-slate-400">No questions yet — add some via Data Ingestion.</p>}
-        {questions.map((q) => (
-          <button
-            key={q.id}
-            onClick={() => setSelectedQuestionId(q.id)}
-            className={`rounded-md border px-3 py-2 text-left text-sm transition-colors ${
-              q.id === selectedQuestionId ? "border-brand-300 bg-brand-50" : "border-transparent hover:bg-slate-50"
-            }`}
-          >
-            <p className="flex items-center gap-1.5 font-medium text-slate-800">
-              {q.has_draft && (
-                <span
-                  title="At least one version submitted"
-                  className="h-2 w-2 shrink-0 rounded-full bg-emerald-500"
-                />
-              )}
-              <span className="truncate">{q.title}</span>
+        {groupQuestionsBySection(questions).map((group) => (
+          <div key={group.section} className="flex flex-col gap-1.5">
+            <p className="mt-1 truncate px-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400" title={group.section}>
+              {group.section}
             </p>
-            <p className="mt-0.5 text-xs text-slate-400">{q.category}</p>
-          </button>
+            {group.questions.map((q) => (
+              <button
+                key={q.id}
+                onClick={() => setSelectedQuestionId(q.id)}
+                className={`rounded-md border px-3 py-2 text-left text-sm transition-colors ${
+                  q.id === selectedQuestionId ? "border-brand-300 bg-brand-50" : "border-transparent hover:bg-slate-50"
+                }`}
+              >
+                <p className="flex items-center gap-1.5 font-medium text-slate-800">
+                  {q.has_draft && (
+                    <span
+                      title="At least one version submitted"
+                      className="h-2 w-2 shrink-0 rounded-full bg-emerald-500"
+                    />
+                  )}
+                  <span className="truncate">{q.title}</span>
+                </p>
+              </button>
+            ))}
+          </div>
         ))}
       </div>
 

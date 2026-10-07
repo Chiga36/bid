@@ -22,6 +22,7 @@ from app.routers import (
     scoring,
     tenders,
     theme_review,
+    zip_ingestion,
 )
 
 app = FastAPI(
@@ -54,7 +55,7 @@ app.add_middleware(
 def _parse_size_to_bytes(size_str: str) -> int:
     match = re.match(r"^\s*(\d+)\s*([kKmMgG]?[bB])?\s*$", size_str)
     if not match:
-        return 50 * 1024 * 1024  # sensible default if the env var is malformed
+        return 200 * 1024 * 1024  # sensible default if the env var is malformed
     value = int(match.group(1))
     unit = (match.group(2) or "b").lower()
     multiplier = {"b": 1, "kb": 1024, "mb": 1024**2, "gb": 1024**3}.get(unit, 1)
@@ -92,6 +93,7 @@ app.include_router(prompts.router)
 app.include_router(recommendations.router)
 app.include_router(benchmark.router)
 app.include_router(theme_review.router)
+app.include_router(zip_ingestion.router)
 
 
 @app.get("/health")
